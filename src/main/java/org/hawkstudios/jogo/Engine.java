@@ -181,6 +181,7 @@ final public class Engine extends Thread {
         tex1.addVert2f(0,0);
         tex1.addVert2f(1, 0);
         tex1.addVert2f(1, 1);
+        
         tex1.addVert2f(0, 1);
         
         tex1.update();
