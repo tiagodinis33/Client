@@ -3,7 +3,7 @@ package org.hawkstudios.jogo.engine;
 import org.hawkstudios.jogo.render.engine.GLSLProgram;
 import org.hawkstudios.jogo.render.engine.RawModel;
 import org.hawkstudios.jogo.render.engine.VBO;
-import org.joml.Vector3f;
+
 
 public class Model extends RawModel {
     public Model(RawModel mRawModel) throws IllegalArgumentException{
