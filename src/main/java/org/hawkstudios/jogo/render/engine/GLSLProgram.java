@@ -12,7 +12,7 @@ import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 
 import org.hawkstudios.jogo.engine.Material;
-import org.hawkstudios.jogo.render.Resource;
+import org.hawkstudios.jogo.engine.Resource;
 import org.joml.Matrix4f;
 import org.joml.Vector4f;
 

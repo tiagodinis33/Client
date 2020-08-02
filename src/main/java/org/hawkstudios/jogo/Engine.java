@@ -9,13 +9,13 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import org.hawkstudios.jogo.engine.Model;
+import org.hawkstudios.jogo.engine.Resource;
 import org.hawkstudios.jogo.engine.Texture;
-import org.hawkstudios.jogo.render.Resource;
 import org.hawkstudios.jogo.render.engine.Camera;
 import org.hawkstudios.jogo.render.engine.GLSLProgram;
 import org.hawkstudios.jogo.render.engine.PositionVBO;
 import org.hawkstudios.jogo.render.engine.Renderer;
-import org.hawkstudios.jogo.render.engine.VBO;
+import org.hawkstudios.jogo.render.internal.VBO;
 import org.lwjgl.glfw.GLFWCursorPosCallback;
 import org.lwjgl.glfw.GLFWKeyCallback;
 import org.lwjgl.glfw.GLFWVidMode;
@@ -54,46 +54,7 @@ final public class Engine extends Thread {
     private void update() {
         glfwPollEvents();
         glfwSwapBuffers(window);
-        float x = (float) Math.sin(Math.toRadians(Camera.active.getRotation().y)) * vel;
-        float z = (float) Math.cos(Math.toRadians(Camera.active.getRotation().y)) * vel;
-
-        newMouseX = (float) cursorX;
-        newMouseY = (float) cursorY;
-
-        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-            Camera.active.getPosition().x -= x;
-            Camera.active.getPosition().z -= z;
-        }
-        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-            Camera.active.getPosition().x -= -x;
-            Camera.active.getPosition().z -= -z;
-        }
-        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-            Camera.active.getPosition().x -= z;
-            Camera.active.getPosition().z -= -x;
-        }
-        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-            Camera.active.getPosition().x -= -z;
-            Camera.active.getPosition().z -= x;
-        }
-        if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-            Camera.active.getPosition().y -= -vel;
-        }
-        if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS
-                || glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS) {
-            Camera.active.getPosition().y -= vel;
-        }
-        float dx = newMouseX - oldMouseX;
-        float dy = newMouseY - oldMouseY;
-
-        if (this.isMouseLocked()) {
-            Camera.active.getRotation().x = Math.max(-90f,
-                    Math.min(90f, Camera.active.getRotation().x + (-dy * mouseSensitivity)));
-            Camera.active.getRotation().y = Camera.active.getRotation().y + (-dx * mouseSensitivity);
-
-        }
-        oldMouseX = newMouseX;
-        oldMouseY = newMouseY;
+        
     }
 
     private boolean mouseLocked;
@@ -193,6 +154,7 @@ final public class Engine extends Thread {
         GL33.glBindVertexArray(0);
         model1.getPosition().x = 0.5f;
         model1.getPosition().y = 0.5f;
+        
         model1.getPosition().z = -1;
         model.getPosition().z = -2;
         model1.addVBO(vbo1);
@@ -213,6 +175,52 @@ final public class Engine extends Thread {
         models.add(model1);
         models.add(model);
         renderer = new Renderer(models);
+        Camera.active.setOnUpdate(new Runnable() {
+			
+			@Override
+			public void run() {
+				float x = (float) Math.sin(Math.toRadians(Camera.active.getRotation().y)) * vel;
+		        float z = (float) Math.cos(Math.toRadians(Camera.active.getRotation().y)) * vel;
+
+		        newMouseX = (float) cursorX;
+		        newMouseY = (float) cursorY;
+
+		        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+		            Camera.active.getPosition().x -= x;
+		            Camera.active.getPosition().z -= z;
+		        }
+		        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+		            Camera.active.getPosition().x -= -x;
+		            Camera.active.getPosition().z -= -z;
+		        }
+		        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+		            Camera.active.getPosition().x -= z;
+		            Camera.active.getPosition().z -= -x;
+		        }
+		        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+		            Camera.active.getPosition().x -= -z;
+		            Camera.active.getPosition().z -= x;
+		        }
+		        if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+		            Camera.active.getPosition().y -= -vel;
+		        }
+		        if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS
+		                || glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS) {
+		            Camera.active.getPosition().y -= vel;
+		        }
+		        float dx = newMouseX - oldMouseX;
+		        float dy = newMouseY - oldMouseY;
+
+		        if (isMouseLocked()) {
+		            Camera.active.getRotation().x = Math.max(-90f,
+		                    Math.min(90f, Camera.active.getRotation().x + (-dy * mouseSensitivity)));
+		            Camera.active.getRotation().y = Camera.active.getRotation().y + (-dx * mouseSensitivity);
+
+		        }
+		        oldMouseX = newMouseX;
+		        oldMouseY = newMouseY;
+			}
+		});
     }
     double cursorX;
     public void setFullscreen(boolean fullscreen) {
@@ -232,12 +240,19 @@ final public class Engine extends Thread {
         if(!glfwInit()){
             System.out.println("Não foi possivel iniciar o GLFW!!");
         }
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+            glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+
+            glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, 1);
+            glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         GLFWVidMode screen = glfwGetVideoMode(glfwGetPrimaryMonitor());
         setWindow(glfwCreateWindow((int)screen.width(),(int) screen.height(), title, glfwGetPrimaryMonitor(), 0));
         glfwShowWindow(getWindow());
         glfwMakeContextCurrent(window);
         glfwSwapInterval(1);
         glfwSetWindowSizeLimits(window, 800, 600, -1, -1);
+            
+        
         glfwSetCursorPosCallback(window, new GLFWCursorPosCallback(){
             @Override
             public void invoke(long window, double xpos, double ypos) {

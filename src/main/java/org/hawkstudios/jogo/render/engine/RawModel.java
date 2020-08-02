@@ -1,5 +1,7 @@
 package org.hawkstudios.jogo.render.engine;
 
+import org.hawkstudios.jogo.render.internal.VAO;
+import org.hawkstudios.jogo.render.internal.VBO;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 

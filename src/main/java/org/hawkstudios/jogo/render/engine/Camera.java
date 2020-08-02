@@ -18,6 +18,24 @@ public class Camera {
     public Vector3f getRotation() {
         return rotation;
     }
+    private Runnable onUpdate = new Runnable() {
+    	public void run() {}
+    };
+    /**
+     * 
+     * Define o metodo de update
+     * Esse metodo é executado cada vez que {@link Renderer#render} é executado. Obs: NAO SÃO TODOS OS OBJETOS CAMERA, APENAS O QUE ESTIVER EM {@link active} SERÁ CONSIDERADO
+     * Mais tarde será obsoleto e será substituido por scripts JavaScript
+     * 
+     * 
+     * @param onUpdate O Novo metodo
+     **/
+    public void setOnUpdate(Runnable onUpdate) {
+		this.onUpdate = onUpdate;
+	}
+    public Runnable getOnUpdate() {
+    	return onUpdate;
+    }
     public static Matrix4f getMatrix() {
         Matrix4f matrixRot;
         Matrix4f matrixRotX = new Matrix4f().rotateX((float) Math.toRadians(-active.rotation.x));
