@@ -1,4 +1,4 @@
-package org.hawkstudios.jogo.engine;
+package org.liquiduser.stur.engine;
 
 import java.awt.image.*;
 import java.io.IOException;
@@ -9,8 +9,8 @@ import javax.imageio.ImageIO;
 import static org.lwjgl.opengl.GL33.*;
 
 public class Texture {
-    private ByteBuffer buffer;
-    private BufferedImage image;
+    private final ByteBuffer buffer;
+    private final BufferedImage image;
     int id;
     int slot;
     public Texture() throws IOException {
@@ -67,10 +67,10 @@ public class Texture {
     public Texture create(Texture.MipMap MM){
         id= glGenTextures();
         glBindTexture(GL_TEXTURE_2D,id);
-        if(MM.getId() == "nearest"){
+        if(MM.getId().equals("nearest")){
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        }else if(MM.getId() == "linear"){
+        }else if(MM.getId().equals("linear")){
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         }
@@ -82,7 +82,7 @@ public class Texture {
     }
 
 
-    public static enum MipMap{
+    public enum MipMap{
         LINEAR("linear"),NEAREST("nearest");
 
 
@@ -91,7 +91,7 @@ public class Texture {
         public String getId() {
             return id;
         }
-        private MipMap(String id){
+        MipMap(String id){
             this.id = id;
         }
     }

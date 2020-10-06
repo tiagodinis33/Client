@@ -1,4 +1,4 @@
-package org.hawkstudios.jogo.render.engine;
+package org.liquiduser.stur.ioutils;
 
 import java.io.BufferedReader;
 import java.io.IOException;

@@ -1,12 +1,12 @@
-package org.hawkstudios.jogo.render.engine;
+package org.liquiduser.stur.render.engine;
 
 import static org.lwjgl.opengl.GL33.*;
 
 import java.util.List;
 
-import org.hawkstudios.jogo.Engine;
-import org.hawkstudios.jogo.engine.Model;
-import org.hawkstudios.jogo.render.internal.VBO;
+import org.liquiduser.Stur;
+import org.liquiduser.stur.engine.Model;
+import org.liquiduser.stur.render.internal.VBO;
 import org.joml.Matrix4f;
 
 public class Renderer {
@@ -17,7 +17,7 @@ public class Renderer {
     }
 
     Matrix4f getPerspective() {
-        return new Matrix4f().perspective(70, Engine.getEngine().getWidth() / Engine.getEngine().getHeight(),
+        return new Matrix4f().perspective(70, Stur.getEngine().getWidth() / Stur.getEngine().getHeight(),
                 0.1f, 1000f);
     }
     /**

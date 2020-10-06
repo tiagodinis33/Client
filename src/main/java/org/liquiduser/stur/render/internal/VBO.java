@@ -1,6 +1,6 @@
-package org.hawkstudios.jogo.render.internal;
+package org.liquiduser.stur.render.internal;
 
-import org.hawkstudios.jogo.engine.Resource;
+import org.liquiduser.stur.engine.Resource;
 import org.lwjgl.system.MemoryUtil;
 
 import static org.lwjgl.opengl.GL33.*;

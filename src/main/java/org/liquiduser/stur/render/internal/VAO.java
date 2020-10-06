@@ -1,9 +1,9 @@
-package org.hawkstudios.jogo.render.internal;
+package org.liquiduser.stur.render.internal;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.hawkstudios.jogo.engine.Resource;
+import org.liquiduser.stur.engine.Resource;
 
 import static org.lwjgl.opengl.GL33.*;
 public class VAO extends Resource {

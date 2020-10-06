@@ -1,21 +1,23 @@
-package org.hawkstudios.jogo;
+package org.liquiduser;
 
 import static org.lwjgl.glfw.GLFW.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Scanner;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import org.hawkstudios.jogo.engine.Model;
-import org.hawkstudios.jogo.engine.Resource;
-import org.hawkstudios.jogo.engine.Texture;
-import org.hawkstudios.jogo.render.engine.Camera;
-import org.hawkstudios.jogo.render.engine.GLSLProgram;
-import org.hawkstudios.jogo.render.engine.PositionVBO;
-import org.hawkstudios.jogo.render.engine.Renderer;
-import org.hawkstudios.jogo.render.internal.VBO;
+import org.liquiduser.net.client.Client;
+import org.liquiduser.stur.engine.Model;
+import org.liquiduser.stur.engine.Resource;
+import org.liquiduser.stur.engine.Texture;
+import org.liquiduser.stur.render.engine.Camera;
+import org.liquiduser.stur.render.engine.GLSLProgram;
+import org.liquiduser.stur.render.engine.PositionVBO;
+import org.liquiduser.stur.render.engine.Renderer;
+import org.liquiduser.stur.render.internal.VBO;
 import org.lwjgl.glfw.GLFWCursorPosCallback;
 import org.lwjgl.glfw.GLFWKeyCallback;
 import org.lwjgl.glfw.GLFWVidMode;
@@ -24,7 +26,7 @@ import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL33;
 
-final public class Engine extends Thread {
+final public class Stur extends Thread {
 
     private static Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
@@ -50,7 +52,7 @@ final public class Engine extends Thread {
     private float newMouseX;
     private float mouseSensitivity = 0.2f;
     private float vel = 0.05f;
-
+    Client client;
     private void update() {
         glfwPollEvents();
         glfwSwapBuffers(window);
@@ -79,8 +81,11 @@ final public class Engine extends Thread {
         }
         glfwTerminate();
     }
-
+    Integer id;
     private void postStart() {
+
+
+
         ArrayList<Model> models = new ArrayList<>();
         VBO index = new VBO();
         index.create();
@@ -234,7 +239,7 @@ final public class Engine extends Thread {
         }
         this.fullscreen = fullscreen;
     }
-    private boolean fullscreen = true;
+    private boolean fullscreen = false;
     double cursorY;
     private void startGame() {
         if(!glfwInit()){
@@ -246,7 +251,7 @@ final public class Engine extends Thread {
             glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, 1);
             glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         GLFWVidMode screen = glfwGetVideoMode(glfwGetPrimaryMonitor());
-        setWindow(glfwCreateWindow((int)screen.width(),(int) screen.height(), title, glfwGetPrimaryMonitor(), 0));
+        setWindow(glfwCreateWindow((int)screen.width(),(int) screen.height(), title, 0, 0));
         glfwShowWindow(getWindow());
         glfwMakeContextCurrent(window);
         glfwSwapInterval(1);
@@ -286,19 +291,19 @@ final public class Engine extends Thread {
         GL.createCapabilities();
     }
 
-    private static Engine engine;
-    public static Engine getEngine(){
-        return engine == null? new Engine(0, 0, "") : engine;
+    private static Stur engine;
+    public static Stur getEngine(){
+        return engine == null? new Stur(0, 0, "") : engine;
     }
     private float width;
     private float height;
     private String title;
     private long window;
-    public Engine(int width, int height, String title){
+    public Stur(int width, int height, String title){
         this.title = title;
         this.height = height;
         this.width = width;
-        Engine.engine = this;
+        Stur.engine = this;
     }
     
 

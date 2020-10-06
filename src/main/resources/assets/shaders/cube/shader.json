@@ -1,4 +1,4 @@
 {
-    "frag":"cube/frag",
-    "vertex":"cube/vert"
+    "frag":"simple/frag",
+    "vertex":"simple/vert"
 }

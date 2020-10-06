@@ -14,7 +14,7 @@
             "type": "java",
             "name": "Debug (Launch)-Main<Client>",
             "request": "launch",
-            "mainClass": "org.hawkstudios.jogo.Main",
+            "mainClass": "org.liquiduser.stur.Main",
             "projectName": "Client"
 
         }

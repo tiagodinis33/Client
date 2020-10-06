@@ -1,8 +1,8 @@
-package org.hawkstudios.jogo.engine;
+package org.liquiduser.stur.engine;
 
-import org.hawkstudios.jogo.render.engine.GLSLProgram;
-import org.hawkstudios.jogo.render.engine.RawModel;
-import org.hawkstudios.jogo.render.internal.VBO;
+import org.liquiduser.stur.render.engine.GLSLProgram;
+import org.liquiduser.stur.render.engine.RawModel;
+import org.liquiduser.stur.render.internal.VBO;
 
 
 public class Model extends RawModel {

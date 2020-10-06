@@ -1,4 +1,4 @@
-package org.hawkstudios.jogo.render.engine;
+package org.liquiduser.stur.render.engine;
 
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -24,7 +24,7 @@ public class Camera {
     /**
      * 
      * Define o metodo de update
-     * Esse metodo é executado cada vez que {@link Renderer#render} é executado. Obs: NAO SÃO TODOS OS OBJETOS CAMERA, APENAS O QUE ESTIVER EM {@link active} SERÁ CONSIDERADO
+     * Esse metodo é executado cada vez que {@link Renderer#render} é executado. Obs: NAO SÃO TODOS OS OBJETOS CAMERA, APENAS O QUE ESTIVER EM {@link Camera#active} SERÁ CONSIDERADO
      * Mais tarde será obsoleto e será substituido por scripts JavaScript
      * 
      * 

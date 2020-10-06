@@ -21,7 +21,7 @@ dependencies {
     implementation group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.13.3'
     implementation 'org.joml:joml:1.9.24'
     implementation platform("org.lwjgl:lwjgl-bom:3.2.3")
-
+    implementation fileTree(dir: 'libs', include: '*.jar')
     implementation "org.lwjgl:lwjgl"
     implementation "org.lwjgl:lwjgl-assimp"
     implementation "org.lwjgl:lwjgl-glfw"
@@ -58,5 +58,5 @@ dependencies {
 
 
 application {
-    mainClassName = 'org.hawkstudios.jogo.Main'
+    mainClassName = 'org.liquiduser.stur.Main'
 }

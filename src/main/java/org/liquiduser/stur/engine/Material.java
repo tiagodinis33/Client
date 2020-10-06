@@ -1,4 +1,4 @@
-package org.hawkstudios.jogo.engine;
+package org.liquiduser.stur.engine;
 
 import org.joml.Vector4f;
 

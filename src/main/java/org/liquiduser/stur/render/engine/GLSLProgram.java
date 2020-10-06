@@ -1,4 +1,4 @@
-package org.hawkstudios.jogo.render.engine;
+package org.liquiduser.stur.render.engine;
 
 import static org.lwjgl.opengl.GL33.*;
 
@@ -11,10 +11,11 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 
-import org.hawkstudios.jogo.engine.Material;
-import org.hawkstudios.jogo.engine.Resource;
+import org.liquiduser.stur.engine.Material;
+import org.liquiduser.stur.engine.Resource;
 import org.joml.Matrix4f;
 import org.joml.Vector4f;
+import org.liquiduser.stur.ioutils.IOUtils;
 
 public class GLSLProgram extends Resource {
     private final int programId;
@@ -96,9 +97,9 @@ public class GLSLProgram extends Resource {
                             getClass().getResourceAsStream("/assets/shaders/" + location + "/shader.json"))))
                     .getAsJsonObject();
             vertCode = IOUtils.readBufferedReader(new BufferedReader(new InputStreamReader(GLSLProgram.class
-                    .getResourceAsStream("/assets/glsl/" + shaderJson.get("vertex").getAsString() + ".vs"))));
+                    .getResourceAsStream("/assets/glsl/" + shaderJson.get("vertex").getAsString() + ".glsl"))));
             fragCode = IOUtils.readBufferedReader(new BufferedReader(new InputStreamReader(GLSLProgram.class
-                    .getResourceAsStream("/assets/glsl/" + shaderJson.get("frag").getAsString() + ".fs"))));
+                    .getResourceAsStream("/assets/glsl/" + shaderJson.get("frag").getAsString() + ".glsl"))));
 
             createFragmentShader(fragCode);
             createVertexShader(vertCode);
