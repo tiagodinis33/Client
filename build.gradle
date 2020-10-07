@@ -17,6 +17,7 @@ project.ext.lwjglWindows32 = "natives-windows-x86"
 
 dependencies {
     implementation 'com.google.code.gson:gson:2.8.6'
+    implementation 'org.ode4j:core:0.4.0'
     implementation group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.13.3'
     implementation group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.13.3'
     implementation 'org.joml:joml:1.9.24'

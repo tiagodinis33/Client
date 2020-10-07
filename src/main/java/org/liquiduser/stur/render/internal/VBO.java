@@ -103,7 +103,7 @@ public class VBO extends Resource {
         return bindingBuffer[0];
     }
     /**
-     * Atualiza o VBO no contexto do OpenGL
+     * Atualiza o VBO no contexto do OpenGL <br/><br/>
      * 
      * Esse metodo sincroniza a array atual com o VBO dentro da GPU.
      */

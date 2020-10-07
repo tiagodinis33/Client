@@ -11,6 +11,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 
+import org.joml.Vector3f;
 import org.liquiduser.stur.engine.Material;
 import org.liquiduser.stur.engine.Resource;
 import org.joml.Matrix4f;
@@ -170,5 +171,10 @@ public class GLSLProgram extends Resource {
     public void setUniform(String location, int i) {
         int loc = getUniformLocation(location);
         glUniform1i(loc, i);
+    }
+
+    public void setUniform(String location, Vector3f vector3f) {
+        int loc = getUniformLocation(location);
+        glUniform3f(loc, vector3f.x,vector3f.y,vector3f.z);
     }
 }

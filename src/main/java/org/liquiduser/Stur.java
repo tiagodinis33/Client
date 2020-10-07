@@ -1,18 +1,12 @@
 package org.liquiduser;
 
-import static org.lwjgl.glfw.GLFW.*;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Scanner;
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-
-import org.liquiduser.net.client.Client;
+import org.joml.Vector3f;
 import org.liquiduser.stur.engine.Model;
 import org.liquiduser.stur.engine.Resource;
 import org.liquiduser.stur.engine.Texture;
+import org.liquiduser.stur.math.VectorMath;
 import org.liquiduser.stur.render.engine.Camera;
 import org.liquiduser.stur.render.engine.GLSLProgram;
 import org.liquiduser.stur.render.engine.PositionVBO;
@@ -26,12 +20,46 @@ import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL33;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import static org.lwjgl.glfw.GLFW.*;
+
 final public class Stur extends Thread {
 
-    private static Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static Stur engine;
+    private final float mouseSensitivity = 0.2f;
+    private final float vel = 0.05f;
+    Renderer renderer;
+    double cursorX;
+    double cursorY;
+    private float oldMouseY;
+    private float oldMouseX;
+    private float newMouseY;
+    private float newMouseX;
+    private boolean mouseLocked;
+    private boolean fullscreen = false;
+    private float width;
+    private float height;
+    private String title;
+    private long window;
+
+    public Stur(int width, int height, String title) {
+        this.title = title;
+        this.height = height;
+        this.width = width;
+        Stur.engine = this;
+    }
 
     public static Gson GSON() {
         return GSON;
+    }
+
+    public static Stur getEngine() {
+        return engine == null ? new Stur(0, 0, "") : engine;
     }
 
     @Override
@@ -46,27 +74,13 @@ final public class Stur extends Thread {
         cleanup();
     }
 
-    private float oldMouseY;
-    private float oldMouseX;
-    private float newMouseY;
-    private float newMouseX;
-    private float mouseSensitivity = 0.2f;
-    private float vel = 0.05f;
-    Client client;
     private void update() {
         glfwPollEvents();
         glfwSwapBuffers(window);
-        
+        for (Model model : renderer.models) {
+            model.getOnUpdate().run();
+        }
     }
-
-    private boolean mouseLocked;
-
-    public void setMouseLocked(boolean mouseLocked) {
-        glfwSetInputMode(window, GLFW_CURSOR, mouseLocked ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
-        this.mouseLocked = mouseLocked;
-    }
-
-    Renderer renderer;
 
     private void runGameLoop() {
         //GL11.glClearColor(0.0f, 1.0f, 1.0f, 1.0f);
@@ -81,9 +95,8 @@ final public class Stur extends Thread {
         }
         glfwTerminate();
     }
-    Integer id;
-    private void postStart() {
 
+    private void postStart() {
 
 
         ArrayList<Model> models = new ArrayList<>();
@@ -99,10 +112,11 @@ final public class Stur extends Thread {
         index.update();
         GLSLProgram shader = null;
         try {
-            shader = new GLSLProgram("cube");
+            shader = new GLSLProgram("lightning");
         } catch (Exception e) {
             e.printStackTrace();
         }
+        assert shader != null;
         shader.create();
         Model model = new Model(index, shader);
         PositionVBO vbo = new PositionVBO(0, 3);
@@ -125,14 +139,8 @@ final public class Stur extends Thread {
         index1.addValue(2);
 
         index1.update();
-        GLSLProgram shader1 = null;
-        try {
-            shader1 = new GLSLProgram("cube");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        shader1.create();
-        Model model1 = new Model(index1, shader1);
+
+        Model model1 = new Model(index1, shader);
         PositionVBO vbo1 = new PositionVBO(0, 3);
         VBO tex1 = new PositionVBO(1, 2);
         VBO tex2 = new PositionVBO(1, 2);
@@ -144,12 +152,12 @@ final public class Stur extends Thread {
         vbo1.addVert3f(-0.5f, -0.5f, 0);
         vbo1.update();
         tex1.create();
-        tex1.addVert2f(0,0);
+        tex1.addVert2f(0, 0);
         tex1.addVert2f(1, 0);
         tex1.addVert2f(1, 1);
-        
+
         tex1.addVert2f(0, 1);
-        
+
         tex1.update();
         tex2.create();
         tex2.addVert2f(0, 1);
@@ -159,9 +167,9 @@ final public class Stur extends Thread {
         GL33.glBindVertexArray(0);
         model1.getPosition().x = 0.5f;
         model1.getPosition().y = 0.5f;
-        
+
         model1.getPosition().z = -1;
-        model.getPosition().z = -2;
+
         model1.addVBO(vbo1);
         model.addVBO(tex1);
         model1.addVBO(tex2);
@@ -169,152 +177,154 @@ final public class Stur extends Thread {
         model.getMaterial().getColor().y = 0.0f;
         model.getMaterial().getColor().z = 1.0f;
         model.getMaterial().getColor().w = 1.0f;
+        model.getRotation().x = -90;
+        model.getScale().mul(2);
+
         try {
             model.getMaterial().setTexture(new Texture().create(Texture.MipMap.NEAREST, 0));
             model1.getMaterial().setTexture(new Texture("misc/test").create(Texture.MipMap.LINEAR, 1));
-            
+
         } catch (IOException e) {
 
             e.printStackTrace();
         }
+        VBO normals = new VBO(2, 3);
+        normals.create();
+        model1.addVBO(normals);
         models.add(model1);
         models.add(model);
+
+        VBO normals1 = new VBO(2,3);
+        normals1.create();
+        model.addVBO(normals1);
+        model.setOnUpdate(() ->{
+
+            normals1.getArray().addAll(0, VectorMath.floatsFromVectorList(VectorMath.calculateVertexNormals(
+                    VectorMath.vectorListFromFloats(model.getModelVBO().getArray()),
+                    VectorMath.asIntegerList(model.getIndex().getArray()))));
+            normals1.update();
+
+        });
+        model1.setOnUpdate(() ->{
+            normals.getArray().addAll(0, VectorMath.floatsFromVectorList(VectorMath.calculateVertexNormals(
+                    VectorMath.vectorListFromFloats(model1.getModelVBO().getArray()),
+                    VectorMath.asIntegerList(model1.getIndex().getArray()))));
+
+            normals.update();
+        });
         renderer = new Renderer(models);
-        Camera.active.setOnUpdate(new Runnable() {
-			
-			@Override
-			public void run() {
-				float x = (float) Math.sin(Math.toRadians(Camera.active.getRotation().y)) * vel;
-		        float z = (float) Math.cos(Math.toRadians(Camera.active.getRotation().y)) * vel;
+        Camera.active.setOnUpdate(() -> {
+            float x = (float) Math.sin(Math.toRadians(Camera.active.getRotation().y)) * vel;
+            float z = (float) Math.cos(Math.toRadians(Camera.active.getRotation().y)) * vel;
 
-		        newMouseX = (float) cursorX;
-		        newMouseY = (float) cursorY;
+            newMouseX = (float) cursorX;
+            newMouseY = (float) cursorY;
 
-		        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-		            Camera.active.getPosition().x -= x;
-		            Camera.active.getPosition().z -= z;
-		        }
-		        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-		            Camera.active.getPosition().x -= -x;
-		            Camera.active.getPosition().z -= -z;
-		        }
-		        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-		            Camera.active.getPosition().x -= z;
-		            Camera.active.getPosition().z -= -x;
-		        }
-		        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-		            Camera.active.getPosition().x -= -z;
-		            Camera.active.getPosition().z -= x;
-		        }
-		        if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-		            Camera.active.getPosition().y -= -vel;
-		        }
-		        if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS
-		                || glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS) {
-		            Camera.active.getPosition().y -= vel;
-		        }
-		        float dx = newMouseX - oldMouseX;
-		        float dy = newMouseY - oldMouseY;
+            if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+                Camera.active.getPosition().x -= x;
+                Camera.active.getPosition().z -= z;
+            }
+            if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+                Camera.active.getPosition().x -= -x;
+                Camera.active.getPosition().z -= -z;
+            }
+            if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+                Camera.active.getPosition().x -= z;
+                Camera.active.getPosition().z -= -x;
+            }
+            if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+                Camera.active.getPosition().x -= -z;
+                Camera.active.getPosition().z -= x;
+            }
+            if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+                Camera.active.getPosition().y -= -vel;
+            }
+            if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS
+                    || glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS) {
+                Camera.active.getPosition().y -= vel;
+            }
+            float dx = newMouseX - oldMouseX;
+            float dy = newMouseY - oldMouseY;
 
-		        if (isMouseLocked()) {
-		            Camera.active.getRotation().x = Math.max(-90f,
-		                    Math.min(90f, Camera.active.getRotation().x + (-dy * mouseSensitivity)));
-		            Camera.active.getRotation().y = Camera.active.getRotation().y + (-dx * mouseSensitivity);
+            if (isMouseLocked()) {
+                Camera.active.getRotation().x = Math.max(-90f,
+                        Math.min(90f, Camera.active.getRotation().x + (-dy * mouseSensitivity)));
+                Camera.active.getRotation().y = Camera.active.getRotation().y + (-dx * mouseSensitivity);
 
-		        }
-		        oldMouseX = newMouseX;
-		        oldMouseY = newMouseY;
-			}
-		});
+            }
+            oldMouseX = newMouseX;
+            oldMouseY = newMouseY;
+        });
     }
-    double cursorX;
     public void setFullscreen(boolean fullscreen) {
         GLFWVidMode screen = glfwGetVideoMode(glfwGetPrimaryMonitor());
-        if(fullscreen){
+        if (fullscreen) {
             glfwSetWindowMonitor(window, glfwGetPrimaryMonitor(), 0, 0, screen.width(), screen.height(), screen.refreshRate());
-        }else{
-            glfwSetWindowMonitor(window, 0, 0, 30, (int)width,(int) height, -1);
-            
+        } else {
+            glfwSetWindowMonitor(window, 0, 0, 30, (int) width, (int) height, -1);
+
 
         }
         this.fullscreen = fullscreen;
     }
-    private boolean fullscreen = false;
-    double cursorY;
+
     private void startGame() {
-        if(!glfwInit()){
+        if (!glfwInit()) {
             System.out.println("Não foi possivel iniciar o GLFW!!");
         }
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-            glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 
-            glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, 1);
-            glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, 1);
+        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         GLFWVidMode screen = glfwGetVideoMode(glfwGetPrimaryMonitor());
-        setWindow(glfwCreateWindow((int)screen.width(),(int) screen.height(), title, 0, 0));
+        setWindow(glfwCreateWindow(screen.width(), screen.height(), title, 0, 0));
         glfwShowWindow(getWindow());
         glfwMakeContextCurrent(window);
         glfwSwapInterval(1);
         glfwSetWindowSizeLimits(window, 800, 600, -1, -1);
-            
-        
-        glfwSetCursorPosCallback(window, new GLFWCursorPosCallback(){
+
+
+        glfwSetCursorPosCallback(window, new GLFWCursorPosCallback() {
             @Override
             public void invoke(long window, double xpos, double ypos) {
                 cursorX = xpos;
                 cursorY = ypos;
             }
         });
-        glfwSetKeyCallback(window, new GLFWKeyCallback(){
+        glfwSetKeyCallback(window, new GLFWKeyCallback() {
             @Override
             public void invoke(long window, int key, int scancode, int action, int mods) {
-                if(key == GLFW_KEY_F && action == GLFW_PRESS){
+                if (key == GLFW_KEY_F && action == GLFW_PRESS) {
                     setMouseLocked(!isMouseLocked());
                 }
-                if(key == GLFW_KEY_F11 && action == GLFW_PRESS){
+                if (key == GLFW_KEY_F11 && action == GLFW_PRESS) {
                     setFullscreen(!fullscreen);
                 }
-                if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+                if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
                     glfwSetWindowShouldClose(window, true);
             }
         });
-        glfwSetWindowSizeCallback(window, new GLFWWindowSizeCallback(){
+        glfwSetWindowSizeCallback(window, new GLFWWindowSizeCallback() {
 
-			@Override
-			public void invoke(long window, int width, int height) {
-				setWidth(width);
+            @Override
+            public void invoke(long window, int width, int height) {
+                setWidth(width);
                 setHeight(height);
-                GL33.glViewport(0,0,width,height);
-			}
-            
+                GL33.glViewport(0, 0, width, height);
+            }
+
         });
         GL.createCapabilities();
     }
 
-    private static Stur engine;
-    public static Stur getEngine(){
-        return engine == null? new Stur(0, 0, "") : engine;
-    }
-    private float width;
-    private float height;
-    private String title;
-    private long window;
-    public Stur(int width, int height, String title){
-        this.title = title;
-        this.height = height;
-        this.width = width;
-        Stur.engine = this;
-    }
-    
-
     public float getWidth() {
         return width;
     }
-
     public void setWidth(int width) {
-        
-        
-            this.width = width;
+
+
+        this.width = width;
     }
 
     public float getHeight() {
@@ -322,8 +332,8 @@ final public class Stur extends Thread {
     }
 
     public void setHeight(int height) {
-        
-            this.height = height;
+
+        this.height = height;
 
     }
 
@@ -333,7 +343,7 @@ final public class Stur extends Thread {
 
     public void setTitle(String title) {
         this.title = title;
-        if(window != 0)
+        if (window != 0)
             glfwSetWindowTitle(window, title);
 
     }
@@ -349,5 +359,10 @@ final public class Stur extends Thread {
     public boolean isMouseLocked() {
         return mouseLocked;
     }
-    
+
+    public void setMouseLocked(boolean mouseLocked) {
+        glfwSetInputMode(window, GLFW_CURSOR, mouseLocked ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
+        this.mouseLocked = mouseLocked;
+    }
+
 }
