@@ -11,7 +11,7 @@ uniform mat4 perspective;
 uniform mat4 transform;
 void main(){
     texCoord = texCoords;
-    normals = normalIn;
+    normals = mat3(transform) * (normalIn* (-1));
     FragPos = vec3(transform * vec4(pos, 1.0));
     gl_Position =  (perspective * camera * transform)  * vec4(pos,1.0f);
 

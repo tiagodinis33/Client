@@ -9,7 +9,7 @@ import java.util.List;
 public class VectorMath {
     public static Vector3f cross(Vector3f vec, Vector3f vec1){
         Vector3f result = new Vector3f();
-        vec.cross(vec1, result);
+        vec1.cross(vec, result);
         return result;
     }
 
@@ -39,8 +39,8 @@ public class VectorMath {
         vec.normalize(result);
         return result;
     }
-    public static List<Vector3f> calculateVertexNormals(List<Vector3f> vertexPositions, List<Integer> triangleIndices){
-        return Arrays.asList(calculateVertexNormals(toArrayVec3f(vertexPositions), toArrayi(triangleIndices)));
+    public static List<Vector3f> calculateVertexNormals(List<Vector3f> vertexPositions){
+        return Arrays.asList(calculateVertexNormals(toArrayVec3f(vertexPositions)));
     }
     public static List<Vector3f> vectorListFromFloats(List<Float> floats){
 
@@ -52,15 +52,17 @@ public class VectorMath {
     }
     public static List<Float> floatsFromVectorList(List<Vector3f> vectors){
         List<Float> floats = new ArrayList<>();
+        int j = 0;
         for(int i = 0; i < vectors.size(); i++){
             Vector3f vec = vectors.get(i);
-            floats.add(i, vec.x);
-            floats.add(i+1, vec.y);
-            floats.add(i+2,vec.z);
+            floats.add(j, vec.x);
+            floats.add(j+1, vec.y);
+            floats.add(j+2,vec.z);
+            j+=3;
         }
         return floats;
     }
-    public static Vector3f[] calculateVertexNormals(Vector3f[] vertexPositions, int[] triangleIndices)
+    public static Vector3f[] calculateVertexNormals(Vector3f[] vertexPositions)
     {
         Vector3f[] result = new Vector3f[vertexPositions.length];
 
@@ -69,13 +71,13 @@ public class VectorMath {
             result[vertex] = new Vector3f();
 
         // For each face, compute the face normal, and accumulate it into each vertex.
-        for(int index = 0; index < triangleIndices.length; index += 3) {
-            int vertexA = triangleIndices[index];
-            int vertexB = triangleIndices[index + 1];
-            int vertexC = triangleIndices[index + 2];
+        for(int index = 0; index < vertexPositions.length; index += 3) {
+            if(index+2 >= vertexPositions.length) break;
+            int vertexB = index + 1;
+            int vertexC = index + 2;
 
-            var edgeAB = vertexPositions[vertexB].sub(vertexPositions[vertexA], new Vector3f());
-            var edgeAC = vertexPositions[vertexC].sub(vertexPositions[vertexA], new Vector3f());
+            var edgeAB = vertexPositions[vertexB].sub(vertexPositions[index], new Vector3f());
+            var edgeAC = vertexPositions[vertexC].sub(vertexPositions[index], new Vector3f());
 
             // The cross product is perpendicular to both input vectors (normal to the plane).
             // Flip the argument order if you need the opposite winding.
@@ -86,7 +88,7 @@ public class VectorMath {
             // don't have an outsized impact on the final normal per vertex.
 
             // Accumulate this cross product into each vertex normal slot.
-            result[vertexA].add(areaWeightedNormal);
+            result[index].add(areaWeightedNormal);
             result[vertexB].add(areaWeightedNormal);
             result[vertexC].add(areaWeightedNormal);
         }

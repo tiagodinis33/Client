@@ -1,6 +1,8 @@
 package org.liquiduser.stur.render.internal;
 
+import org.joml.Vector3f;
 import org.liquiduser.stur.engine.Resource;
+import org.liquiduser.stur.math.VectorMath;
 import org.lwjgl.system.MemoryUtil;
 
 import static org.lwjgl.opengl.GL33.*;
@@ -8,6 +10,7 @@ import static org.lwjgl.opengl.GL33.*;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class VBO extends Resource {
@@ -69,14 +72,14 @@ public class VBO extends Resource {
      * @implNote As alterações apenas são aplicadas usando o metodo {@link #update()}
      * @param x posição no x
      * @param y posição no y
-     * @throws IllegalArgumentException caso esse VBO seja um Index
+     * @throws UnsupportedOperationException caso esse VBO seja um Index
      */
     public void addVert2f(float x, float y) {
         if (!isIndex()) {
             addValue(x);
             addValue(y);
         } else {
-            throw new IllegalArgumentException("Não é possivel adicionar vertices em um Index!!");
+            throw new UnsupportedOperationException("Não é possivel adicionar vertices em um Index!!");
         }
     }
     public void addValue(float x){
@@ -97,7 +100,7 @@ public class VBO extends Resource {
     }
 
     public int getBindedVao() {
-        int[] bindingBuffer = {};
+        int[] bindingBuffer = new int[1];
         glGetIntegerv(GL_VERTEX_ARRAY_BINDING, bindingBuffer);
 
         return bindingBuffer[0];
@@ -124,7 +127,7 @@ public class VBO extends Resource {
             glBindBuffer(GL_ARRAY_BUFFER, id);
             float[] bufferData = new float[array.size()];
             for (int x = 0; x < array.size(); x++) {
-                bufferData[x] = array.get(x).floatValue();
+                bufferData[x] = array.get(x);
             }
             FloatBuffer data = MemoryUtil.memAllocFloat(array.size()).put(bufferData);
             data.flip();
@@ -158,4 +161,19 @@ public class VBO extends Resource {
         }
     }
 
+    public void set(Vector3f... vectors) {
+        array = VectorMath.floatsFromVectorList(Arrays.asList(vectors));
+        update();
+    }
+    public void set(Float... f){
+        array = Arrays.asList(f);
+        update();
+    }
+    public void set(Integer... i){
+        array.clear();
+        for (int ii = 0; ii < i.length ; ii++){
+            array.add(ii,i[ii].floatValue());
+        }
+        update();
+    }
 }

@@ -5,6 +5,7 @@ import static org.lwjgl.opengl.GL33.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 
 import com.google.gson.JsonIOException;
 import com.google.gson.JsonObject;
@@ -17,6 +18,7 @@ import org.liquiduser.stur.engine.Resource;
 import org.joml.Matrix4f;
 import org.joml.Vector4f;
 import org.liquiduser.stur.ioutils.IOUtils;
+import org.liquiduser.stur.lighning.Light;
 
 public class GLSLProgram extends Resource {
     private final int programId;
@@ -32,6 +34,18 @@ public class GLSLProgram extends Resource {
         if (programId == 0) {
             throw new Exception("Could not create Shader");
         }
+    }
+    /**
+     * Instancia e cria um shader e retorna esse shader
+     *
+     * @param path caminho
+     * @return Um novo {@link GLSLProgram} já criado e instanciado pronto para renderizar
+     * */
+    public static GLSLProgram get(String path) throws Exception {
+        GLSLProgram shader = new GLSLProgram(path);
+        shader.create();
+
+        return shader;
     }
 
     public void createVertexShader(String shaderCode) throws Exception {
@@ -168,13 +182,33 @@ public class GLSLProgram extends Resource {
         }
 	}
 
+
     public void setUniform(String location, int i) {
         int loc = getUniformLocation(location);
         glUniform1i(loc, i);
+    }
+    public void setUniform(String location, float i) {
+        int loc = getUniformLocation(location);
+        glUniform1f(loc, i);
     }
 
     public void setUniform(String location, Vector3f vector3f) {
         int loc = getUniformLocation(location);
         glUniform3f(loc, vector3f.x,vector3f.y,vector3f.z);
+    }
+
+    public String getLoc() {
+        return location;
+    }
+
+    public void setUniform(String location, ArrayList<Light> lights) {
+        int j = 0;
+        for (Light light : lights) {
+            setUniform(location + "[" + j + "].color", light.getColor());
+            setUniform(location + "[" + j + "].lightPos", light.getPos());
+            setUniform(location + "[" + j + "].attenuation", light.getAttenuation());
+            j++;
+
+        }
     }
 }

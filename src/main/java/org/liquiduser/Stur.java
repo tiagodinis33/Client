@@ -3,9 +3,10 @@ package org.liquiduser;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.joml.Vector3f;
+import org.joml.Vector4f;
 import org.liquiduser.stur.engine.Model;
 import org.liquiduser.stur.engine.Resource;
-import org.liquiduser.stur.engine.Texture;
+import org.liquiduser.stur.lighning.Light;
 import org.liquiduser.stur.math.VectorMath;
 import org.liquiduser.stur.render.engine.Camera;
 import org.liquiduser.stur.render.engine.GLSLProgram;
@@ -20,9 +21,7 @@ import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL33;
 
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static org.lwjgl.glfw.GLFW.*;
@@ -95,20 +94,27 @@ final public class Stur extends Thread {
         }
         glfwTerminate();
     }
+    public void reverseArrayList(List<Float> alist)
+    {
+        for (int i = 0; i < alist.size() / 2; i++) {
+            Float temp = alist.get(i);
+            alist.set(i, alist.get(alist.size() - i - 1));
+            alist.set(alist.size() - i - 1, temp);
+        }
+    }
+
 
     private void postStart() {
-
-
         ArrayList<Model> models = new ArrayList<>();
         VBO index = new VBO();
         index.create();
-        index.addValue(0);
-        index.addValue(1);
-        index.addValue(2);
-        index.addValue(2);
-        index.addValue(3);
-        index.addValue(0);
-
+        index.set( 0, 1, 3, 3, 1, 2,
+                1, 5, 2, 2, 5, 6,
+                5, 4, 6, 6, 4, 7,
+                4, 0, 7, 7, 0, 3,
+                3, 2, 7, 7, 2, 6,
+                4, 5, 0, 0, 5, 1);
+        reverseArrayList(index.getArray());
         index.update();
         GLSLProgram shader = null;
         try {
@@ -119,85 +125,32 @@ final public class Stur extends Thread {
         assert shader != null;
         shader.create();
         Model model = new Model(index, shader);
-        PositionVBO vbo = new PositionVBO(0, 3);
+        PositionVBO vbo = new PositionVBO();
         model.create();
         GL33.glBindVertexArray(model.getVaoID());
+        vbo.set(new Vector3f(-1, -1, -1),
+                new Vector3f(1, -1, -1),
+                new Vector3f(1, 1, -1),
+                new Vector3f(-1, 1, -1),
+                new Vector3f(-1, -1, 1),
+                new Vector3f(1, -1, 1),
+                new Vector3f(1, 1, 1),
+                new Vector3f(-1, 1, 1));
         vbo.create();
-        vbo.addVert3f(-0.5f, 0.5f, 0);
-        vbo.addVert3f(-0.5f, -0.5f, 0);
-        vbo.addVert3f(0.5f, -0.5f, 0);
-        vbo.addVert3f(0.5f, 0.5f, 0);
-        vbo.update();
-        GL33.glBindVertexArray(0);
+        VBO normals = new VBO(2,3);
+
         model.addVBO(vbo);
-
-        // 2nd triangle for test
-        VBO index1 = new VBO();
-        index1.create();
-        index1.addValue(0);
-        index1.addValue(1);
-        index1.addValue(2);
-
-        index1.update();
-
-        Model model1 = new Model(index1, shader);
-        PositionVBO vbo1 = new PositionVBO(0, 3);
-        VBO tex1 = new PositionVBO(1, 2);
-        VBO tex2 = new PositionVBO(1, 2);
-        model1.create();
-        GL33.glBindVertexArray(model1.getVaoID());
-        vbo1.create();
-        vbo1.addVert3f(0.5f, -0.5f, 0);
-        vbo1.addVert3f(0, 0.5f, 0);
-        vbo1.addVert3f(-0.5f, -0.5f, 0);
-        vbo1.update();
-        tex1.create();
-        tex1.addVert2f(0, 0);
-        tex1.addVert2f(1, 0);
-        tex1.addVert2f(1, 1);
-
-        tex1.addVert2f(0, 1);
-
-        tex1.update();
-        tex2.create();
-        tex2.addVert2f(0, 1);
-        tex2.addVert2f(0, 0);
-        tex2.addVert2f(1, 0);
-        tex2.update();
-        GL33.glBindVertexArray(0);
-        model1.getPosition().x = 0.5f;
-        model1.getPosition().y = 0.5f;
-
-        model1.getPosition().z = -1;
-
-        model1.addVBO(vbo1);
-        model.addVBO(tex1);
-        model1.addVBO(tex2);
         model.getMaterial().getColor().x = 1.0f;
         model.getMaterial().getColor().y = 0.0f;
         model.getMaterial().getColor().z = 1.0f;
         model.getMaterial().getColor().w = 1.0f;
         model.getRotation().x = -90;
-        model.getScale().mul(2);
+        VBO textureCoords = new VBO(1,2);
 
-        try {
-            model.getMaterial().setTexture(new Texture().create(Texture.MipMap.NEAREST, 0));
-            model1.getMaterial().setTexture(new Texture("misc/test").create(Texture.MipMap.LINEAR, 1));
-
-        } catch (IOException e) {
-
-            e.printStackTrace();
-        }
-        VBO normals = new VBO(2, 3);
-        normals.create();
-        model1.addVBO(normals);
-        models.add(model1);
         models.add(model);
-
-        VBO normals1 = new VBO(2,3);
-        normals1.create();
-        model.addVBO(normals1);
-        model.setOnUpdate(() ->{
+        model.addVBO(textureCoords);
+        model.addVBO(normals);
+        /*model.setOnUpdate(() ->{
 
             normals1.getArray().addAll(0, VectorMath.floatsFromVectorList(VectorMath.calculateVertexNormals(
                     VectorMath.vectorListFromFloats(model.getModelVBO().getArray()),
@@ -211,9 +164,32 @@ final public class Stur extends Thread {
                     VectorMath.asIntegerList(model1.getIndex().getArray()))));
 
             normals.update();
-        });
+        });*/
+        normals.set(new Vector3f(0, 0, 1),
+                new Vector3f(1, 0, 0),
+                new Vector3f(0, 0, -1),
+                new Vector3f(-1, 0, 0),
+                new Vector3f(0, 1, 0),
+                new Vector3f(0, -1, 0));
+        normals.update();
+        Model lightModel = null;
+        try {
+            lightModel = new Model(index, GLSLProgram.get("cube"));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        assert lightModel != null;
+        lightModel.create();
+        lightModel.getMaterial().setColor(new Vector4f(1));
+        lightModel.addVBO(vbo);
+        lightModel.getMaterial().getColor().set(1);
+        models.add(lightModel);
         renderer = new Renderer(models);
+
+
+        Model finalLightModel = lightModel;
         Camera.active.setOnUpdate(() -> {
+            normals.set(VectorMath.calculateVertexNormals(VectorMath.toArrayVec3f(VectorMath.vectorListFromFloats(vbo.getArray()))));
             float x = (float) Math.sin(Math.toRadians(Camera.active.getRotation().y)) * vel;
             float z = (float) Math.cos(Math.toRadians(Camera.active.getRotation().y)) * vel;
 
@@ -243,6 +219,25 @@ final public class Stur extends Thread {
                     || glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS) {
                 Camera.active.getPosition().y -= vel;
             }
+            if(glfwGetKey(window,GLFW_KEY_J) == GLFW_PRESS){
+                light.getPos().z+=vel;
+            }
+            if(glfwGetKey(window,GLFW_KEY_U) == GLFW_PRESS){
+                light.getPos().z-=vel;
+            }
+            if(glfwGetKey(window,GLFW_KEY_H) == GLFW_PRESS){
+                light.getPos().x-=vel;
+            }
+            if(glfwGetKey(window,GLFW_KEY_K) == GLFW_PRESS){
+                light.getPos().x+=vel;
+            }
+            if(glfwGetKey(window,GLFW_KEY_G) == GLFW_PRESS){
+                light.getPos().y-=vel;
+            }
+            if(glfwGetKey(window,GLFW_KEY_T) == GLFW_PRESS){
+                light.getPos().y+=vel;
+            }
+
             float dx = newMouseX - oldMouseX;
             float dy = newMouseY - oldMouseY;
 
@@ -254,11 +249,22 @@ final public class Stur extends Thread {
             }
             oldMouseX = newMouseX;
             oldMouseY = newMouseY;
+
+            finalLightModel.setPosition(light.getPos());
+
+
         });
+        model.getMaterial().setColor(new Vector4f(1));
+        //renderer.getLights().add(new Light(new Vector3f(),new Vector3f(1), 0.5f));
+        renderer.getLights().add(light);
+        renderer.models.add(lightModel);
+        lightModel.getScale().mul(0.2f);
     }
+    Light light = new Light(new Vector3f(0,-0.5f,1),new Vector3f(1), 1f);
     public void setFullscreen(boolean fullscreen) {
         GLFWVidMode screen = glfwGetVideoMode(glfwGetPrimaryMonitor());
         if (fullscreen) {
+            assert screen != null;
             glfwSetWindowMonitor(window, glfwGetPrimaryMonitor(), 0, 0, screen.width(), screen.height(), screen.refreshRate());
         } else {
             glfwSetWindowMonitor(window, 0, 0, 30, (int) width, (int) height, -1);

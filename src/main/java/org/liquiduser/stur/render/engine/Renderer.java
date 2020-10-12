@@ -2,11 +2,13 @@ package org.liquiduser.stur.render.engine;
 
 import static org.lwjgl.opengl.GL33.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.joml.Vector3f;
 import org.liquiduser.Stur;
 import org.liquiduser.stur.engine.Model;
+import org.liquiduser.stur.lighning.Light;
 import org.liquiduser.stur.render.internal.VBO;
 import org.joml.Matrix4f;
 
@@ -21,6 +23,20 @@ public class Renderer {
         return new Matrix4f().perspective(70, Stur.getEngine().getWidth() / Stur.getEngine().getHeight(),
                 0.1f, 1000f);
     }
+    ArrayList<Light> lights = new ArrayList<>();
+
+    public ArrayList<Light> getLights() {
+        return lights;
+    }
+
+    public List<Model> getModels() {
+        return models;
+    }
+
+    public void setLights(ArrayList<Light> lights) {
+        this.lights = lights;
+    }
+
     /**
      * Define os modelos a serem renderizados,
      * é muito util para dar impressão que entrou em outra cena
@@ -44,7 +60,11 @@ public class Renderer {
             }
 
             model.getProgram().bind();
-            model.getProgram().setUniform("lightPos", new Vector3f(0f,0f,3f));
+            if(model.getProgram().getLoc().contains("light")) {
+                model.getProgram().setUniform("lightN", getLights().size());
+                model.getProgram().setUniform("lightsPos", getLights());
+                model.getProgram().setUniform("viewPos",Camera.active.getPosition());
+            }
             model.getProgram().setUniform("material", model.getMaterial());
             if(model.getMaterial().getTexture() != null){
                 model.getMaterial().getTexture().bind();
