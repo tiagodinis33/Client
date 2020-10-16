@@ -10,6 +10,7 @@ import org.liquiduser.stur.engine.Resource;
 import org.liquiduser.stur.engine.Texture;
 import org.liquiduser.stur.gui.GuiScreen;
 import org.liquiduser.stur.gui.MainMenu;
+import org.liquiduser.stur.ioutils.Input;
 import org.liquiduser.stur.lighning.Light;
 import org.liquiduser.stur.math.VectorMath;
 import org.liquiduser.stur.render.engine.Camera;
@@ -36,7 +37,7 @@ final public class Stur extends Thread {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static Stur engine;
     private final float mouseSensitivity = 0.2f;
-    private final float vel = 0.05f;
+    private final float vel = 0.1f;
     Renderer renderer;
     double cursorX;
     double cursorY;
@@ -87,11 +88,12 @@ final public class Stur extends Thread {
         if(guiScreen != null){
             guiScreen.update();
         }
+        Input.update();
+        Camera.active.getOnUpdate().run();
     }
 
     private void runGameLoop() {
-        renderer.setProjection(new Matrix4f().perspective(70, Stur.getEngine().getWidth() / Stur.getEngine().getHeight(),
-                0.1f, 1000f));
+
         GL11.glClearColor(0.0f, 1.0f, 1.0f, 0.0f);
         GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
         if (width != 0 && height != 0) {
@@ -108,6 +110,8 @@ final public class Stur extends Thread {
         }
     }
     private void renderWorld(){
+        renderer.setProjection(new Matrix4f().perspective(70, Stur.getEngine().getWidth() / Stur.getEngine().getHeight(),
+                0.1f, 1000f));
         renderer.render();
     }
 

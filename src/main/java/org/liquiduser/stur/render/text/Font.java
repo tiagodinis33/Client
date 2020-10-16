@@ -289,7 +289,7 @@ public class Font extends Resource{
             char c = text.charAt(i);
             if (c == '\n') {
                 /* Line end, add line height to stored height */
-                height += lineHeight;
+                height -= lineHeight;
                 lineHeight = 0;
                 continue;
             }
@@ -325,7 +325,7 @@ public class Font extends Resource{
             char ch = text.charAt(i);
             if (ch == '\n') {
                 /* Line feed, set x and y to draw at the next line */
-                drawY -= fontHeight;
+                drawY += fontHeight;
                 drawX = x;
                 continue;
             }
@@ -357,6 +357,25 @@ public class Font extends Resource{
     public void cleanup() {
         Resource.cleanup(texture);
     }
-    public static final Font SERIF = new Font(java.awt.Font.getFont(java.awt.Font.SERIF));
+    public static final Font SERIF = new Font(new java.awt.Font("Serif", PLAIN, 16));
+    public static final Font ARIAL = new Font(new java.awt.Font("Arial", PLAIN, 16));
 
+    public static final Font VERDANA = new Font(new java.awt.Font("Verdana", PLAIN, 16));
+    private static java.awt.Font createAWTFont(InputStream in){
+        try {
+            return java.awt.Font.createFont(0, in).deriveFont(16f);
+        } catch (FontFormatException | IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+    private static java.awt.Font createAWTFont(InputStream in, int size){
+        try {
+            return java.awt.Font.createFont(0, in).deriveFont((float) size);
+        } catch (FontFormatException | IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+    public static final Font MINECRAFT = new Font(createAWTFont(Font.class.getResourceAsStream("/assets/textures/fonts/Minecraftia.ttf")));
 }

@@ -18,16 +18,14 @@ public class Renderer {
 
     public Renderer(List<Model> models) {
         this.models = models;
-        projection = new Matrix4f().perspective(70, Stur.getEngine().getWidth() / Stur.getEngine().getHeight(),
-                0.0f, 1000f);
+
     }
     public Renderer(Model... models) {
 
-        projection = new Matrix4f().perspective(70, Stur.getEngine().getWidth() / Stur.getEngine().getHeight(),
-                0.1f, 1000f);
         this.models = Arrays.asList(models);
     }
-    Matrix4f projection;
+    Matrix4f projection = new Matrix4f().perspective(70, Stur.getEngine().getWidth() / Stur.getEngine().getHeight(),
+            0.1f, 1000f);
     public Matrix4f getProjection() {
         return projection;
     }
@@ -72,7 +70,7 @@ public class Renderer {
 	}
     public boolean is2D;
     public void render() {
-        Camera.active.getOnUpdate().run();
+
         for (Model model : models) {
             if(depthTestingEnabled)
                 glEnable(GL_DEPTH_TEST);
