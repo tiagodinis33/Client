@@ -7,6 +7,11 @@ public class Resource {
     protected Resource(){
         resources.add(this);
     }
+
+    public static void cleanup(Resource res) {
+        res.cleanup();
+    }
+
     public void cleanup(){}
     public void create(){}
     public void update(){}

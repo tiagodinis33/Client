@@ -39,9 +39,6 @@ public class VectorMath {
         vec.normalize(result);
         return result;
     }
-    public static List<Vector3f> calculateVertexNormals(List<Vector3f> vertexPositions){
-        return Arrays.asList(calculateVertexNormals(toArrayVec3f(vertexPositions)));
-    }
     public static List<Vector3f> vectorListFromFloats(List<Float> floats){
 
         List<Vector3f> result = new ArrayList<>();
@@ -62,42 +59,7 @@ public class VectorMath {
         }
         return floats;
     }
-    public static Vector3f[] calculateVertexNormals(Vector3f[] vertexPositions)
-    {
-        Vector3f[] result = new Vector3f[vertexPositions.length];
 
-        // Zero-out our normal buffer to start from a clean slate.
-        for(int vertex = 0; vertex < vertexPositions.length; vertex++)
-            result[vertex] = new Vector3f();
-
-        // For each face, compute the face normal, and accumulate it into each vertex.
-        for(int index = 0; index < vertexPositions.length; index += 3) {
-            if(index+2 >= vertexPositions.length) break;
-            int vertexB = index + 1;
-            int vertexC = index + 2;
-
-            var edgeAB = vertexPositions[vertexB].sub(vertexPositions[index], new Vector3f());
-            var edgeAC = vertexPositions[vertexC].sub(vertexPositions[index], new Vector3f());
-
-            // The cross product is perpendicular to both input vectors (normal to the plane).
-            // Flip the argument order if you need the opposite winding.
-            var areaWeightedNormal = cross(edgeAB, edgeAC);
-
-            // Don't normalize this vector just yet. Its magnitude is proportional to the
-            // area of the triangle (times 2), so this helps ensure tiny/skinny triangles
-            // don't have an outsized impact on the final normal per vertex.
-
-            // Accumulate this cross product into each vertex normal slot.
-            result[index].add(areaWeightedNormal);
-            result[vertexB].add(areaWeightedNormal);
-            result[vertexC].add(areaWeightedNormal);
-        }
-
-        // Finally, normalize all the sums to get a unit-length, area-weighted average.
-        for(int vertex = 0; vertex < vertexPositions.length; vertex++)
-            result[vertex].normalize();
-        return result;
-    }
     public static List<Integer> asIntegerList(List<Float> list){
         List<Integer> result = new ArrayList<>();
         for(int i = 0; i < list.size(); i++){

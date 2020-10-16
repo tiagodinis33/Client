@@ -14,9 +14,7 @@ public class Model extends RawModel {
         super.setRotation(mRawModel.getPosition());
         super.setScale(mRawModel.getScale());
     }
-    private Runnable onUpdate = new Runnable() {
-    	public void run() {}
-    };
+    private Runnable onUpdate = () -> {};
     /**
      * 
      * Define o metodo de update
@@ -41,5 +39,6 @@ public class Model extends RawModel {
     public Model(VBO index, GLSLProgram program) throws IllegalArgumentException {
         super(index, program);
     }
-    
+
+
 }

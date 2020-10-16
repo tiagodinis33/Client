@@ -24,8 +24,6 @@ uniform vec3 viewPos;
 
 uniform Material material;
 void main(){
-    if(gl_FrontFacing)
-    {
         vec4 color;
         if (material.tex.enabled == 1){
             color = texture(material.tex.slot, texCoord);
@@ -47,8 +45,5 @@ void main(){
 
         }
         fragColor = vec4(result, color.w);
-    }
-    else {
-        fragColor = vec4(1.0f, 0.0f, 0.0f, 1.0f);
-    }
+
 }

@@ -3,6 +3,7 @@ package org.liquiduser.stur.render.engine;
 import static org.lwjgl.opengl.GL33.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.joml.Vector3f;
@@ -17,11 +18,31 @@ public class Renderer {
 
     public Renderer(List<Model> models) {
         this.models = models;
+        projection = new Matrix4f().perspective(70, Stur.getEngine().getWidth() / Stur.getEngine().getHeight(),
+                0.0f, 1000f);
+    }
+    public Renderer(Model... models) {
+
+        projection = new Matrix4f().perspective(70, Stur.getEngine().getWidth() / Stur.getEngine().getHeight(),
+                0.1f, 1000f);
+        this.models = Arrays.asList(models);
+    }
+    Matrix4f projection;
+    public Matrix4f getProjection() {
+        return projection;
+    }
+    boolean depthTestingEnabled = true;
+
+    public boolean isDepthTestingEnabled() {
+        return depthTestingEnabled;
     }
 
-    Matrix4f getPerspective() {
-        return new Matrix4f().perspective(70, Stur.getEngine().getWidth() / Stur.getEngine().getHeight(),
-                0.1f, 1000f);
+    public void setDepthTestingEnabled(boolean depthTestingEnabled) {
+        this.depthTestingEnabled = depthTestingEnabled;
+    }
+
+    public void setProjection(Matrix4f p){
+        this.projection = p;
     }
     ArrayList<Light> lights = new ArrayList<>();
 
@@ -36,7 +57,10 @@ public class Renderer {
     public void setLights(ArrayList<Light> lights) {
         this.lights = lights;
     }
-
+    private int drawmode = GL_TRIANGLES;
+    public void setDrawMode(int dm){
+        drawmode = dm;
+    }
     /**
      * Define os modelos a serem renderizados,
      * é muito util para dar impressão que entrou em outra cena
@@ -46,11 +70,12 @@ public class Renderer {
     public void setModels(List<Model> models) {
 		this.models = models;
 	}
+    public boolean is2D;
     public void render() {
         Camera.active.getOnUpdate().run();
         for (Model model : models) {
-            glEnable(GL_DEPTH_TEST);
-            glDisable(GL_CULL_FACE);
+            if(depthTestingEnabled)
+                glEnable(GL_DEPTH_TEST);
             glDepthFunc(GL_LESS);
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -69,14 +94,15 @@ public class Renderer {
             if(model.getMaterial().getTexture() != null){
                 model.getMaterial().getTexture().bind();
             }
-            model.getProgram().setUniform("perspective", getPerspective());
-            model.getProgram().setUniform("camera", Camera.getMatrix());
+            model.getProgram().setUniform("perspective", getProjection());
+
+            model.getProgram().setUniform("camera", is2D?new Matrix4f():Camera.getMatrix());
             model.getProgram().setUniform("transform", model.getTransformationMatrix());
             
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, model.getIndex().getId());
 
 
-            glDrawElements(GL_TRIANGLES, model.getIndex().getArray().size(),
+            glDrawElements(drawmode, model.getIndex().getArray().size(),
                     GL_UNSIGNED_INT, 0);
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
             if(model.getMaterial().getTexture() != null){

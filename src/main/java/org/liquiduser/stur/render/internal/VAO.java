@@ -60,4 +60,7 @@ public class VAO extends Resource {
     public List<VBO> getBuffers() {
         return buffers;
     }
+    public boolean isCreated() {
+        return getVaoID() != 0;
+    }
 }

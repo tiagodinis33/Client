@@ -14,15 +14,13 @@ struct Material{
 
 uniform Material material;
 void main(){
-    if(gl_FrontFacing)
-    {
+
         if (material.tex.enabled == 1){
             fragColor = texture(material.tex.slot, texCoord);
         } else {
             fragColor = material.color;
         }
+    if(!gl_FrontFacing){
+        fragColor = vec4(1.0f,0.0f,0.0f,1.0f);
     }
-    else {
-        fragColor = vec4(1.0f, 0.0f, 0.0f, 1.0f);
     }
-}

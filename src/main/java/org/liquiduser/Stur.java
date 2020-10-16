@@ -2,10 +2,14 @@ package org.liquiduser;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 import org.liquiduser.stur.engine.Model;
 import org.liquiduser.stur.engine.Resource;
+import org.liquiduser.stur.engine.Texture;
+import org.liquiduser.stur.gui.GuiScreen;
+import org.liquiduser.stur.gui.MainMenu;
 import org.liquiduser.stur.lighning.Light;
 import org.liquiduser.stur.math.VectorMath;
 import org.liquiduser.stur.render.engine.Camera;
@@ -21,6 +25,7 @@ import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL33;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -44,7 +49,7 @@ final public class Stur extends Thread {
     private float width;
     private float height;
     private String title;
-    private long window;
+    private Long window;
 
     public Stur(int width, int height, String title) {
         this.title = title;
@@ -79,13 +84,31 @@ final public class Stur extends Thread {
         for (Model model : renderer.models) {
             model.getOnUpdate().run();
         }
+        if(guiScreen != null){
+            guiScreen.update();
+        }
     }
 
     private void runGameLoop() {
-        //GL11.glClearColor(0.0f, 1.0f, 1.0f, 1.0f);
+        renderer.setProjection(new Matrix4f().perspective(70, Stur.getEngine().getWidth() / Stur.getEngine().getHeight(),
+                0.1f, 1000f));
+        GL11.glClearColor(0.0f, 1.0f, 1.0f, 0.0f);
         GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
-        if (width != 0 && height != 0)
-            renderer.render();
+        if (width != 0 && height != 0) {
+            render();
+        }
+    }
+    private void render(){
+        renderWorld();
+        renderGui();
+    }
+    private void renderGui(){
+        if(guiScreen != null){
+            guiScreen.render();
+        }
+    }
+    private void renderWorld(){
+        renderer.render();
     }
 
     public void cleanup() {
@@ -105,6 +128,7 @@ final public class Stur extends Thread {
 
 
     private void postStart() {
+        displayGuiScreen(new MainMenu());
         ArrayList<Model> models = new ArrayList<>();
         VBO index = new VBO();
         index.create();
@@ -150,31 +174,19 @@ final public class Stur extends Thread {
         models.add(model);
         model.addVBO(textureCoords);
         model.addVBO(normals);
-        /*model.setOnUpdate(() ->{
-
-            normals1.getArray().addAll(0, VectorMath.floatsFromVectorList(VectorMath.calculateVertexNormals(
-                    VectorMath.vectorListFromFloats(model.getModelVBO().getArray()),
-                    VectorMath.asIntegerList(model.getIndex().getArray()))));
-            normals1.update();
-
-        });
-        model1.setOnUpdate(() ->{
-            normals.getArray().addAll(0, VectorMath.floatsFromVectorList(VectorMath.calculateVertexNormals(
-                    VectorMath.vectorListFromFloats(model1.getModelVBO().getArray()),
-                    VectorMath.asIntegerList(model1.getIndex().getArray()))));
-
-            normals.update();
-        });*/
-        normals.set(new Vector3f(0, 0, 1),
-                new Vector3f(1, 0, 0),
-                new Vector3f(0, 0, -1),
-                new Vector3f(-1, 0, 0),
-                new Vector3f(0, 1, 0),
-                new Vector3f(0, -1, 0));
+        textureCoords.set(0,0,0,1,1,0,1,1,0,0,0,1,1,0,1,1);
+        normals.set(new Vector3f(-2, -2, -2),
+                new Vector3f(2, -2, -2),
+                new Vector3f(2, 2, -2),
+                new Vector3f(-2, 2, -2),
+                new Vector3f(-2, -2, 2),
+                new Vector3f(2, -2, 2),
+                new Vector3f(2, 2, 2),
+                new Vector3f(-2, 2, 2));
         normals.update();
         Model lightModel = null;
         try {
-            lightModel = new Model(index, GLSLProgram.get("cube"));
+            lightModel = new Model(index, GLSLProgram.get("simple"));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -189,8 +201,7 @@ final public class Stur extends Thread {
 
         Model finalLightModel = lightModel;
         Camera.active.setOnUpdate(() -> {
-            normals.set(VectorMath.calculateVertexNormals(VectorMath.toArrayVec3f(VectorMath.vectorListFromFloats(vbo.getArray()))));
-            float x = (float) Math.sin(Math.toRadians(Camera.active.getRotation().y)) * vel;
+           float x = (float) Math.sin(Math.toRadians(Camera.active.getRotation().y)) * vel;
             float z = (float) Math.cos(Math.toRadians(Camera.active.getRotation().y)) * vel;
 
             newMouseX = (float) cursorX;
@@ -220,22 +231,22 @@ final public class Stur extends Thread {
                 Camera.active.getPosition().y -= vel;
             }
             if(glfwGetKey(window,GLFW_KEY_J) == GLFW_PRESS){
-                light.getPos().z+=vel;
+                model.getPosition().z+=vel;
             }
             if(glfwGetKey(window,GLFW_KEY_U) == GLFW_PRESS){
-                light.getPos().z-=vel;
+                model.getPosition().z-=vel;
             }
             if(glfwGetKey(window,GLFW_KEY_H) == GLFW_PRESS){
-                light.getPos().x-=vel;
+                model.getPosition().x-=vel;
             }
             if(glfwGetKey(window,GLFW_KEY_K) == GLFW_PRESS){
-                light.getPos().x+=vel;
+                model.getPosition().x+=vel;
             }
             if(glfwGetKey(window,GLFW_KEY_G) == GLFW_PRESS){
-                light.getPos().y-=vel;
+                model.getPosition().y-=vel;
             }
             if(glfwGetKey(window,GLFW_KEY_T) == GLFW_PRESS){
-                light.getPos().y+=vel;
+                model.getPosition().y+=vel;
             }
 
             float dx = newMouseX - oldMouseX;
@@ -254,11 +265,19 @@ final public class Stur extends Thread {
 
 
         });
-        model.getMaterial().setColor(new Vector4f(1));
-        //renderer.getLights().add(new Light(new Vector3f(),new Vector3f(1), 0.5f));
+        try {
+            model.getMaterial().setTexture(Texture.get("misc/default", Texture.MipMap.LINEAR));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         renderer.getLights().add(light);
         renderer.models.add(lightModel);
         lightModel.getScale().mul(0.2f);
+    }
+    GuiScreen guiScreen;
+    public void displayGuiScreen(GuiScreen gui){
+        gui.initGui();
+        guiScreen = gui;
     }
     Light light = new Light(new Vector3f(0,-0.5f,1),new Vector3f(1), 1f);
     public void setFullscreen(boolean fullscreen) {
@@ -282,9 +301,9 @@ final public class Stur extends Thread {
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, 1);
-        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         GLFWVidMode screen = glfwGetVideoMode(glfwGetPrimaryMonitor());
         setWindow(glfwCreateWindow(screen.width(), screen.height(), title, 0, 0));
+        assert window != 0;
         glfwShowWindow(getWindow());
         glfwMakeContextCurrent(window);
         glfwSwapInterval(1);
