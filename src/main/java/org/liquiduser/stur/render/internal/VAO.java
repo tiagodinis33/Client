@@ -25,13 +25,14 @@ public class VAO extends Resource {
     }
     @Override
     public void cleanup() {
-        if(vaoID == 0){
-            throw new IllegalStateException("O ID não pode ser 0 ao limpar!! Isto pode ser causado por ja ter sido limpo ou nunca foi criado!");
-        }
+        super.cleanup();
         for(VBO buffer : buffers){
+            if(buffer.getId() == 0){
+                continue;
+            }
             buffer.cleanup();
         }
-
+        if(vaoID != 0)
         glDeleteVertexArrays(vaoID);
     }
     public void removeVBO(int slot) throws IndexOutOfBoundsException{
@@ -53,8 +54,9 @@ public class VAO extends Resource {
             	removeVBO(vbo.getSlot());
             }
         }
-        if(!buffers.contains(vbo))
+        if(!buffers.contains(vbo)) {
             buffers.add(vbo.getSlot(), vbo);
+        }
         glBindVertexArray(0);
     }
     public List<VBO> getBuffers() {

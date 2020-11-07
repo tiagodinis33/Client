@@ -121,7 +121,6 @@ public class GLSLProgram extends Resource {
             link();
         } catch (JsonIOException | JsonSyntaxException | IOException e) {
             e.printStackTrace();
-            return;
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -12,7 +12,7 @@ import static org.lwjgl.opengl.GL33.*;
 
 public class Texture extends Resource {
     private final ByteBuffer buffer;
-    private final BufferedImage image;
+    protected final BufferedImage image;
     int id;
     final int width;
     final int height;

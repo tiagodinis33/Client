@@ -4,12 +4,14 @@ import static org.lwjgl.opengl.GL33.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 import org.joml.Vector3f;
 import org.liquiduser.Stur;
 import org.liquiduser.stur.engine.Model;
 import org.liquiduser.stur.lighning.Light;
+import org.liquiduser.stur.math.VectorMath;
 import org.liquiduser.stur.render.internal.VBO;
 import org.joml.Matrix4f;
 
@@ -69,50 +71,59 @@ public class Renderer {
 		this.models = models;
 	}
     public boolean is2D;
+    public boolean useIndex = true;
     public void render() {
 
-        for (Model model : models) {
-            if(depthTestingEnabled)
-                glEnable(GL_DEPTH_TEST);
-            glDepthFunc(GL_LESS);
-            glEnable(GL_BLEND);
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            glBindVertexArray(model.getVaoID());
-            for (VBO buffer : model.getBuffers()) {
-                glEnableVertexAttribArray(buffer.getSlot());
-            }
+        for (Model model : models){
+            if(model.isActive){
+                if (!is2D) {
+                    glEnable(GL_DEPTH_TEST);
+                    glDepthFunc(GL_LESS);
+                }
+                glEnable(GL_BLEND);
+                glBlendEquation(GL_FUNC_ADD);
 
-            model.getProgram().bind();
-            if(model.getProgram().getLoc().contains("light")) {
-                model.getProgram().setUniform("lightN", getLights().size());
-                model.getProgram().setUniform("lightsPos", getLights());
-                model.getProgram().setUniform("viewPos",Camera.active.getPosition());
-            }
-            model.getProgram().setUniform("material", model.getMaterial());
-            if(model.getMaterial().getTexture() != null){
-                model.getMaterial().getTexture().bind();
-            }
-            model.getProgram().setUniform("perspective", getProjection());
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                glBindVertexArray(model.getVaoID());
+                for (VBO buffer : model.getBuffers()) {
+                    glEnableVertexAttribArray(buffer.getSlot());
+                }
 
-            model.getProgram().setUniform("camera", is2D?new Matrix4f():Camera.getMatrix());
-            model.getProgram().setUniform("transform", model.getTransformationMatrix());
-            
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, model.getIndex().getId());
+                model.getProgram().bind();
+                if (model.getProgram().getLoc().contains("light")) {
+                    model.getProgram().setUniform("lightN", getLights().size());
+                    model.getProgram().setUniform("lightsPos", getLights());
+                    model.getProgram().setUniform("viewPos", Camera.active.getPosition());
+                }
+                model.getProgram().setUniform("material", model.getMaterial());
+                if (model.getMaterial().getTexture() != null) {
+                    model.getMaterial().getTexture().bind();
+                }
+                model.getProgram().setUniform("perspective", getProjection());
+
+                model.getProgram().setUniform("camera", is2D ? new Matrix4f() : Camera.getMatrix());
+                model.getProgram().setUniform("transform", model.getTransformationMatrix());
+                if (useIndex) {
+                    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, model.getIndex().getId());
 
 
-            glDrawElements(drawmode, model.getIndex().getArray().size(),
-                    GL_UNSIGNED_INT, 0);
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-            if(model.getMaterial().getTexture() != null){
-                model.getMaterial().getTexture().unbind();
+                    glDrawElements(drawmode, model.getIndex().getArray().size(),
+                            GL_UNSIGNED_INT, 0);
+                    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+                } else {
+                    glDrawArrays(drawmode, 0, model.getModelVBO().getArray().size() / 3);
+                }
+                if (model.getMaterial().getTexture() != null) {
+                    model.getMaterial().getTexture().unbind();
+                }
+                model.getProgram().unbind();
+                for (VBO buffer : model.getBuffers()) {
+                    glDisableVertexAttribArray(buffer.getSlot());
+                }
+                glBindVertexArray(0);
+                glDisable(GL_DEPTH_TEST);
+                glDisable(GL_BLEND);
             }
-            model.getProgram().unbind();
-            for (VBO buffer : model.getBuffers()) {
-                glDisableVertexAttribArray(buffer.getSlot());
-            }
-            glBindVertexArray(0);
-            glDisable(GL_DEPTH_TEST);
-            glDisable(GL_BLEND);
         }
     }
 }

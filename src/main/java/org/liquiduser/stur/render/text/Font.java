@@ -357,13 +357,30 @@ public class Font extends Resource{
     public void cleanup() {
         Resource.cleanup(texture);
     }
-    public static final Font SERIF = new Font(new java.awt.Font("Serif", PLAIN, 16));
-    public static final Font ARIAL = new Font(new java.awt.Font("Arial", PLAIN, 16));
+    public static final Font SERIF = new Font(new java.awt.Font("Serif", PLAIN, 26));
+    public static final Font ARIAL = new Font(createAWTFont("ARIAL.TTF",26));
+    public static final Font SEGOE_UI = new Font(createAWTFont("Segoe UI.ttf",26));
 
-    public static final Font VERDANA = new Font(new java.awt.Font("Verdana", PLAIN, 16));
+    public static final Font VERDANA = new Font(new java.awt.Font("Verdana", PLAIN, 26));
     private static java.awt.Font createAWTFont(InputStream in){
         try {
             return java.awt.Font.createFont(0, in).deriveFont(16f);
+        } catch (FontFormatException | IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+    private static java.awt.Font createAWTFont(String in, int size){
+        try {
+            return java.awt.Font.createFont(0, Font.class.getResourceAsStream("/assets/textures/fonts/"+in)).deriveFont((float) size);
+        } catch (FontFormatException | IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+    private static java.awt.Font createAWTFont(String in){
+        try {
+            return java.awt.Font.createFont(0, Font.class.getResourceAsStream("/assets/textures/fonts/"+in)).deriveFont(16f);
         } catch (FontFormatException | IOException e) {
             e.printStackTrace();
         }
@@ -377,5 +394,5 @@ public class Font extends Resource{
         }
         return null;
     }
-    public static final Font MINECRAFT = new Font(createAWTFont(Font.class.getResourceAsStream("/assets/textures/fonts/Minecraftia.ttf")));
+    public static final Font MINECRAFT = new Font(createAWTFont("Minecraftia.ttf",26));
 }

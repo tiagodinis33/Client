@@ -7,14 +7,9 @@ import org.joml.Vector3f;
 
 public class RawModel extends VAO {
     protected RawModel(){}
-    public RawModel(VBO index, GLSLProgram program) throws IllegalArgumentException{
+    public RawModel(VBO index, GLSLProgram program){
         super();
-        if(index == null || program == null){
-            throw new NullPointerException("O index e shader não podem ser null!");
-        }
-        if(!index.isIndex()){
-            throw new IllegalArgumentException("O VBO passado não é um index!!");
-        }
+
         this.program = program;
         this.index = index;
     }
@@ -57,6 +52,7 @@ public class RawModel extends VAO {
     @Override
     public void create() {
         super.create();
+        if(index != null)
         index.create();
     }
 	public VBO getModelVBO() {

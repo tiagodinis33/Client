@@ -27,7 +27,6 @@ public class GuiRenderer {
             e.printStackTrace();
         }
         index.create();
-        //2,1,0,2,3,1
         index.set(0,1,2,3,0,2);
     }
 
@@ -153,7 +152,6 @@ public class GuiRenderer {
         renderer.is2D = true;
         renderer.setProjection(new Matrix4f().ortho2D(0,Stur.getEngine().getWidth(),Stur.getEngine().getHeight(),0));
         renderer.setDepthTestingEnabled(false);
-        renderer.setDrawMode(GL11.GL_TRIANGLES);
         renderer.render();
     }
 }

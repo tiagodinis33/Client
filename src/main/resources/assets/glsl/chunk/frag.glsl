@@ -11,16 +11,14 @@ struct Material{
     vec4 color;
     Texture tex;
 };
-
 uniform Material material;
 
-in vec3 FragPos;
 void main(){
 
         if (material.tex.enabled == 1){
             fragColor = texture(material.tex.slot, texCoord);
         } else {
-            fragColor = material.color;
+            fragColor = color;
         }
 
     }
