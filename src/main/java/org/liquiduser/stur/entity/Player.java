@@ -1,7 +1,7 @@
 package org.liquiduser.stur.entity;
 
 import org.joml.*;
-import org.liquiduser.stur.World;
+import org.liquiduser.stur.voxel.World;
 import org.liquiduser.stur.render.engine.Camera;
 import org.liquiduser.stur.voxel.Chunk;
 import org.liquiduser.stur.voxel.Chunk.BlockSide;
@@ -26,7 +26,7 @@ public class Player {
     public void raytraceBlock(World world){
         Vector3f dir = Camera.getMatrix().positiveZ(new Vector3f()).negate();
         side = BlockSide.NONE;
-        float closestDistance = 5;
+        float closestDistance = 100;
         Vector3f min = new Vector3f();
         Vector3f max = new Vector3f();
         selected = null;

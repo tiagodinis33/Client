@@ -1,4 +1,4 @@
-package org.liquiduser.stur;
+package org.liquiduser.stur.voxel;
 
 import org.liquiduser.stur.voxel.Chunk;
 

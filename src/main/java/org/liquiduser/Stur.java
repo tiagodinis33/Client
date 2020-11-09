@@ -3,7 +3,8 @@ package org.liquiduser;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.joml.Vector3f;
-import org.liquiduser.stur.World;
+import org.liquiduser.net.client.Client;
+import org.liquiduser.stur.voxel.World;
 import org.liquiduser.stur.engine.Resource;
 import org.liquiduser.stur.entity.EntityRenderer;
 import org.liquiduser.stur.entity.Player;
@@ -15,54 +16,55 @@ import org.liquiduser.stur.render.engine.Camera;
 import org.liquiduser.stur.voxel.Chunk;
 import org.lwjgl.glfw.GLFWKeyCallback;
 import org.lwjgl.glfw.GLFWVidMode;
-import org.lwjgl.glfw.GLFWWindowSizeCallback;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL33;
 
+import java.io.IOException;
 import java.util.List;
 
 import static org.lwjgl.glfw.GLFW.*;
-final class FPScounter
-{
+
+final class FPScounter {
     private static long startTime;
     private static long endTime;
     private static long frameTimes = 0;
     private static short framesCounter = 0;
     private static short frames = 0;
 
-    /** Start counting the fps**/
-    public static void StartCounter()
-    {
+    /**
+     * Start counting the fps
+     **/
+    public static void StartCounter() {
         //get the current time
-        startTime =  System.currentTimeMillis();
+        startTime = System.currentTimeMillis();
     }
 
     public static short getFrames() {
         return frames;
     }
 
-    public static void ProcessCounter()
-    {
+    public static void ProcessCounter() {
         endTime = System.currentTimeMillis();
         frameTimes = frameTimes + endTime - startTime;
         ++framesCounter;
-        if(frameTimes >= 1000)
-        {
+        if (frameTimes >= 1000) {
             frames = framesCounter;
             framesCounter = 0;
             frameTimes = 0;
         }
     }
 }
-final public class Stur extends Thread {
-    public boolean isFullscreen() {
-        return fullscreen;
-    }
 
+final public class Stur extends Thread {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static Stur engine;
-
+    Client client;
+    Integer id = null;
+    Player player;
+    World world;
+    GuiScreen guiScreen;
+    Light light = new Light(new Vector3f(0, -0.5f, 1), new Vector3f(1), 1f);
     private boolean fullscreen = false;
     private float width;
     private float height;
@@ -84,6 +86,23 @@ final public class Stur extends Thread {
         return engine == null ? new Stur(0, 0, "") : engine;
     }
 
+    public boolean isFullscreen() {
+        return fullscreen;
+    }
+
+    public void setFullscreen(boolean fullscreen) {
+        GLFWVidMode screen = glfwGetVideoMode(glfwGetPrimaryMonitor());
+        if (fullscreen) {
+            assert screen != null;
+            glfwSetWindowMonitor(window, glfwGetPrimaryMonitor(), 0, 0, screen.width(), screen.height(), screen.refreshRate());
+        } else {
+            glfwSetWindowMonitor(window, 0, 0, 30, (int) width, (int) height, -1);
+
+
+        }
+        this.fullscreen = fullscreen;
+    }
+
     @Override
     public void run() {
 
@@ -95,16 +114,17 @@ final public class Stur extends Thread {
         }
         cleanup();
     }
+
     private void update() {
         glfwPollEvents();
         glfwSwapBuffers(window);
 
-        if(guiScreen != null){
+        if (guiScreen != null) {
             guiScreen.update();
         }
         player.raytraceBlock(world);
-        if(Input.isButtonPressed(0))
-            if(player.getSelectedBlock() != null)
+        if (Input.isButtonDown(0))
+            if (player.getSelectedBlock() != null)
                 player.breakBlock();
 
         FPScounter.ProcessCounter();
@@ -122,7 +142,7 @@ final public class Stur extends Thread {
         update();
     }
 
-    private void render(){
+    private void render() {
         renderWorld();
         renderEntities();
         renderGui();
@@ -132,12 +152,13 @@ final public class Stur extends Thread {
         EntityRenderer.renderBlockOverlay(player);
     }
 
-    private void renderGui(){
-        if(guiScreen != null){
+    private void renderGui() {
+        if (guiScreen != null) {
             guiScreen.render();
         }
     }
-    private void renderWorld(){
+
+    private void renderWorld() {
         world.render();
     }
 
@@ -145,10 +166,15 @@ final public class Stur extends Thread {
         for (Resource resource : Resource.resources) {
             resource.cleanup();
         }
+        try {
+            client.getSocket().close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         glfwTerminate();
     }
-    public void reverseArrayList(List<Float> alist)
-    {
+
+    public void reverseArrayList(List<Float> alist) {
         for (int i = 0; i < alist.size() / 2; i++) {
             Float temp = alist.get(i);
             alist.set(i, alist.get(alist.size() - i - 1));
@@ -156,17 +182,15 @@ final public class Stur extends Thread {
         }
     }
 
-
     public int getFps() {
         return FPScounter.getFrames();
     }
-    Player player;
-    World world;
+
     private void postStart() {
         world = new World();
-        Chunk chunk1 = new Chunk(0,0,0);
+        Chunk chunk1 = new Chunk(0, 0, 0);
         chunk1.create();
-        Chunk chunk2 = new Chunk(2,0,2);
+        Chunk chunk2 = new Chunk(2, 0, 2);
         chunk2.create();
         world.chunks.add(chunk1);
         world.chunks.add(chunk2);
@@ -174,24 +198,20 @@ final public class Stur extends Thread {
         player = new Player();
         Camera.active = player.getCamera();
 
+        try {
+            client = new Client("localhost:8080");
+            id = client.readObject();
+            System.out.println(id);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
     }
-    GuiScreen guiScreen;
-    public void displayGuiScreen(GuiScreen gui){
+
+    public void displayGuiScreen(GuiScreen gui) {
         gui.initGui();
         guiScreen = gui;
-    }
-    Light light = new Light(new Vector3f(0,-0.5f,1),new Vector3f(1), 1f);
-    public void setFullscreen(boolean fullscreen) {
-        GLFWVidMode screen = glfwGetVideoMode(glfwGetPrimaryMonitor());
-        if (fullscreen) {
-            assert screen != null;
-            glfwSetWindowMonitor(window, glfwGetPrimaryMonitor(), 0, 0, screen.width(), screen.height(), screen.refreshRate());
-        } else {
-            glfwSetWindowMonitor(window, 0, 0, 30, (int) width, (int) height, -1);
-
-
-        }
-        this.fullscreen = fullscreen;
     }
 
     private void startGame() {
@@ -219,12 +239,12 @@ final public class Stur extends Thread {
                     glfwSetWindowShouldClose(window, true);
             }
         });
-        glfwSetWindowSizeCallback(window,(window, width, height) -> {
+        glfwSetWindowSizeCallback(window, (window, width, height) -> {
 
             this.width = width;
             this.height = height;
             GL33.glViewport(0, 0, width, height);
-            if(guiScreen != null){
+            if (guiScreen != null) {
                 guiScreen.initGui();
             }
         });
@@ -234,8 +254,9 @@ final public class Stur extends Thread {
     public float getWidth() {
         return width;
     }
+
     public void setWidth(int width) {
-        glfwSetWindowSize(window,width,(int)height);
+        glfwSetWindowSize(window, width, (int) height);
 
         this.width = width;
     }
@@ -245,7 +266,7 @@ final public class Stur extends Thread {
     }
 
     public void setHeight(int height) {
-        glfwSetWindowSize(window,(int)width,height);
+        glfwSetWindowSize(window, (int) width, height);
         this.height = height;
 
     }
@@ -268,8 +289,6 @@ final public class Stur extends Thread {
     private void setWindow(long window) {
         this.window = window;
     }
-
-
 
 
 }
