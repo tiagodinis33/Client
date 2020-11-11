@@ -82,7 +82,7 @@ public class GuiRenderer {
         m.getBuffers().get(1).update();
         var renderer = new Renderer(new ArrayList<>());
         renderer.models.add(m);
-        renderer.is2D = true;
+        renderer.useCameraMatrix = false;
         renderer.setProjection(new Matrix4f().ortho2D(0,Stur.getEngine().getWidth(),Stur.getEngine().getHeight(),0));
         renderer.setDepthTestingEnabled(false);
         renderer.setDrawMode(GL11.GL_TRIANGLES);
@@ -149,7 +149,7 @@ public class GuiRenderer {
         m.getBuffers().get(1).update();
         var renderer = new Renderer(new ArrayList<>());
         renderer.models.add(m);
-        renderer.is2D = true;
+        renderer.useCameraMatrix = false;
         renderer.setProjection(new Matrix4f().ortho2D(0,Stur.getEngine().getWidth(),Stur.getEngine().getHeight(),0));
         renderer.setDepthTestingEnabled(false);
         renderer.render();

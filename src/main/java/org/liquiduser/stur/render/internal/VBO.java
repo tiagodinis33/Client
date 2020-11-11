@@ -2,7 +2,7 @@ package org.liquiduser.stur.render.internal;
 
 import org.joml.Vector3f;
 import org.liquiduser.stur.engine.Resource;
-import org.liquiduser.stur.math.VectorMath;
+import org.liquiduser.stur.math.ArrayUtils;
 import org.lwjgl.system.MemoryUtil;
 
 import static org.lwjgl.opengl.GL33.*;
@@ -162,7 +162,7 @@ public class VBO extends Resource {
     }
 
     public void set(Vector3f... vectors) {
-        array = VectorMath.floatsFromVectorList(Arrays.asList(vectors));
+        array = ArrayUtils.floatsFromVectorList(Arrays.asList(vectors));
         update();
     }
     public void set(Float... f){

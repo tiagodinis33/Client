@@ -29,24 +29,61 @@ public class Tile {
         }
         return air;
     }
-    Vector4f color = new Vector4f(0,0,0,1);
-    Vector2i texCoords = new Vector2i();
+    Vector2i texCoordsfront = new Vector2i();
+    Vector2i texCoordsback = new Vector2i();
+    Vector2i texCoordstop = new Vector2i();
+    Vector2i texCoordsbottom = new Vector2i();
+    Vector2i texCoordsright = new Vector2i();
+    Vector2i texCoordsleft = new Vector2i();
 
-    public Vector2i getTexCoords() {
-        return texCoords;
+    public Vector2i getTexCoordsback() {
+        return texCoordsback;
     }
 
-    public void setTexCoords(Vector2i texCoords) {
-        this.texCoords = texCoords;
+    public void setTexCoordsback(Vector2i texCoordsback) {
+        this.texCoordsback = texCoordsback;
     }
 
-    public Vector4f getColor() {
-        return color;
+    public void setTexCoordsbottom(Vector2i texCoordsbottom) {
+        this.texCoordsbottom = texCoordsbottom;
     }
 
-    public void setColor(Vector4f color) {
-        this.color = color;
+    public void setTexCoordsfront(Vector2i texCoordsfront) {
+        this.texCoordsfront = texCoordsfront;
     }
+
+    public void setTexCoordsleft(Vector2i texCoordsleft) {
+        this.texCoordsleft = texCoordsleft;
+    }
+
+    public void setTexCoordsright(Vector2i texCoordsright) {
+        this.texCoordsright = texCoordsright;
+    }
+
+    public void setTexCoordstop(Vector2i texCoordstop) {
+        this.texCoordstop = texCoordstop;
+    }
+
+    public Vector2i getTexCoordsbottom() {
+        return texCoordsbottom;
+    }
+
+    public Vector2i getTexCoordsfront() {
+        return texCoordsfront;
+    }
+
+    public Vector2i getTexCoordsright() {
+        return texCoordsright;
+    }
+
+    public Vector2i getTexCoordsleft() {
+        return texCoordsleft;
+    }
+
+    public Vector2i getTexCoordstop() {
+        return texCoordstop;
+    }
+
 
     public void setId(byte id) {
         this.id = id;

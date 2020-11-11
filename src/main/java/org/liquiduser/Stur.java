@@ -14,6 +14,7 @@ import org.liquiduser.stur.ioutils.Input;
 import org.liquiduser.stur.lighning.Light;
 import org.liquiduser.stur.render.engine.Camera;
 import org.liquiduser.stur.voxel.Chunk;
+import org.liquiduser.stur.voxel.tiles.Tile;
 import org.lwjgl.glfw.GLFWKeyCallback;
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
@@ -114,7 +115,7 @@ final public class Stur extends Thread {
         }
         cleanup();
     }
-
+    boolean wereLines;
     private void update() {
         glfwPollEvents();
         glfwSwapBuffers(window);
@@ -123,18 +124,31 @@ final public class Stur extends Thread {
             guiScreen.update();
         }
         player.raytraceBlock(world);
-        if (Input.isButtonDown(0))
+        if (Input.isButtonPressed(0))
             if (player.getSelectedBlock() != null)
                 player.breakBlock();
+        if(Input.isKeyPressed(GLFW_KEY_F6)){
+            wereLines = !wereLines;
+            if(wereLines){
+
+                GL11.glPolygonMode(GL11.GL_FRONT_AND_BACK, GL11.GL_LINE);
+            }else{
+
+                GL11.glPolygonMode(GL11.GL_FRONT_AND_BACK, GL11.GL_FILL);
+            }
+        }
+        if(Input.isButtonPressed(GLFW_MOUSE_BUTTON_RIGHT))
+            player.placeBlock(Tile.grass);
 
         FPScounter.ProcessCounter();
+
         Input.update();
 
     }
 
     private void runGameLoop() {
         FPScounter.StartCounter();
-        GL11.glClearColor(0.0f, 1.0f, 1.0f, 0.0f);
+        //GL11.glClearColor(0.0f, 1.0f, 1.0f, 0.0f);
         GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
         if (width != 0 && height != 0) {
             render();

@@ -1,13 +1,11 @@
 package org.liquiduser.stur.entity;
 
 import org.joml.Vector3f;
-import org.joml.Vector3i;
 import org.liquiduser.stur.engine.Model;
-import org.liquiduser.stur.math.MathUtils;
+import org.liquiduser.stur.math.Shape;
 import org.liquiduser.stur.render.engine.GLSLProgram;
 import org.liquiduser.stur.render.engine.PositionVBO;
 import org.liquiduser.stur.render.engine.Renderer;
-import org.liquiduser.stur.voxel.Chunk;
 import org.liquiduser.stur.voxel.tiles.Tile;
 
 public class EntityRenderer {
@@ -22,7 +20,7 @@ public class EntityRenderer {
             blockOverlay.create();
             blockOverlay.addVBO(new PositionVBO());
             blockOverlay.getModelVBO().set(
-                    MathUtils.createCubeShape(0,0,0,1.0f)
+                    Shape.createCubeShape(0,0,0,1.005f,true,true,true,true,true,true)
             );
             blockOverlay.getMaterial().getColor().set(0,1,1,0.3f);
         }
@@ -33,12 +31,21 @@ public class EntityRenderer {
             blockOverlay.getPosition().add(tile.getBoundingBox().minX,tile.getBoundingBox().minY,tile.getBoundingBox().minZ);
             blockOverlay.getScale().set(tile.getBoundingBox().maxX-tile.getBoundingBox().minX,tile.getBoundingBox().maxY-tile.getBoundingBox().minY,tile.getBoundingBox().maxZ-tile.getBoundingBox().minZ);
 
-            blockOverlay.getScale().mul(1.005f);
             blockOverlay.getPosition().add(player.selectedChunk.getPos());
             var render = new Renderer(blockOverlay);
             render.useIndex = false;
             render.render();
 
+        }
+    }
+    static Model playerHand;
+    public static void renderFirstPersonHand(Player player){
+        if (playerHand == null) {
+            try {
+                playerHand = new Model(null, GLSLProgram.get("simple"));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 }

@@ -23,13 +23,20 @@ public class Camera {
         return rotation;
     }
 
-    public static Matrix4f getMatrix() {
+    public static Matrix4f getMatrixS() {
         Matrix4f matrixRot;
         Matrix4f matrixRotX = new Matrix4f().rotateX((float) Math.toRadians(-active.rotation.x));
         Matrix4f matrixRotY = new Matrix4f().rotateY((float) Math.toRadians(-active.rotation.y));
         Matrix4f matrixRotZ = new Matrix4f().rotateZ((float) Math.toRadians(-active.rotation.z));
         matrixRot = matrixRotX.mul(matrixRotY).mul(matrixRotZ);
 		return matrixRot.mul(new Matrix4f().translate(new Vector3f(-active.position.x,-active.position.y,-active.position.z)));
+	}public Matrix4f getMatrix() {
+        Matrix4f matrixRot;
+        Matrix4f matrixRotX = new Matrix4f().rotateX((float) Math.toRadians(-rotation.x));
+        Matrix4f matrixRotY = new Matrix4f().rotateY((float) Math.toRadians(-rotation.y));
+        Matrix4f matrixRotZ = new Matrix4f().rotateZ((float) Math.toRadians(-rotation.z));
+        matrixRot = matrixRotX.mul(matrixRotY).mul(matrixRotZ);
+		return matrixRot.mul(new Matrix4f().translate(new Vector3f(-position.x,-position.y,-position.z)));
 	}
     
 }

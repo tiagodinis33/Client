@@ -4,16 +4,16 @@ import org.joml.*;
 import org.liquiduser.stur.engine.Model;
 import org.liquiduser.stur.engine.Resource;
 import org.liquiduser.stur.engine.Texture;
-import org.liquiduser.stur.ioutils.Input;
 import org.liquiduser.stur.render.engine.Camera;
 import org.liquiduser.stur.render.engine.GLSLProgram;
 import org.liquiduser.stur.render.engine.PositionVBO;
 import org.liquiduser.stur.render.engine.Renderer;
 import org.liquiduser.stur.render.internal.VBO;
-import org.liquiduser.stur.math.MathUtils;
+import org.liquiduser.stur.math.Shape;
+import org.liquiduser.stur.utils.SpriteSheet;
 import org.liquiduser.stur.voxel.tiles.Tile;
 
-import java.lang.Math;
+import java.io.IOException;
 import java.util.Arrays;
 
 public class Chunk
@@ -24,13 +24,12 @@ extends Resource
 
     static {
         try {
-            shader = GLSLProgram.get("chunk");
+            shader = GLSLProgram.get("simple");
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
     VBO verticesVBO;
-    VBO colorsVBO;
     VBO texCoords;
     public static final int CHUNKHEIGHTLIMIT = 256;
     public Texture getTexture(){
@@ -39,6 +38,8 @@ extends Resource
     @Override
     public void create() {
         super.create();
+
+        boolean lDefault = true;
         sizeX = CHUNKSIZE;
         sizeY = CHUNKHEIGHTLIMIT;
         sizeZ = CHUNKSIZE;
@@ -47,32 +48,30 @@ extends Resource
         chunkModel.create();
         texCoords = new VBO(1,2);
         verticesVBO = new PositionVBO();
-        colorsVBO = new VBO(2,4);
         chunkModel.addVBO(verticesVBO);
         chunkModel.addVBO(texCoords);
-        chunkModel.addVBO(colorsVBO);
-        /*try {
-            chunkModel.getMaterial().setTexture(new SpriteSheet("blocks/spritesheet",16));
+        try {
+            Texture txt = new SpriteSheet("blocks/spritesheet",16);
+            txt.create(Texture.MipMap.NEAREST);
+            chunkModel.getMaterial().setTexture(txt);
         } catch (IOException e) {
             e.printStackTrace();
-        }*/
+        }
         for (int x = 0; x < sizeX; x++) {
             for (int y = 0; y < sizeY; y++) {
                 for (int z = 0; z < sizeZ; z++) {
-                    if(y <=(pos.y + CHUNKSIZE)){
-                            tiles[x][y][z] = 1;
-                        if (tiles[x][y][z] != 0) {
-                            //texCoords.getArray().addAll(Arrays.asList(MathUtils.getTexCoords(tiles[x][y][z], ((SpriteSheet) getTexture()).getSize(), getTexture().getHeight())));
-                            colorsVBO.getArray().addAll(Arrays.asList(MathUtils.getCubeColors(tiles[x][y][z])));
-                            verticesVBO.getArray().addAll(Arrays.asList(MathUtils.createCubeShape(x, y, z, 1)));
-                        }
+                    if(y <=(CHUNKSIZE)){
+                        tiles[x][y][z] = 1;
                     }
+
+
                 }
             }
         }
+        rebuild();
         chunkModel.getPosition().set(pos);
-        colorsVBO.update();
         verticesVBO.update();
+        texCoords.update();
     }
 
     @Override
@@ -124,41 +123,74 @@ extends Resource
         }
     }
 
-    Vector3i selected;
-    public void render(){
-        var renderer = new Renderer(chunkModel);
-        renderer.useIndex = false;
-        renderer.render();
 
-
-
-
-
-    }
     public void rebuild(){
         verticesVBO.getArray().clear();
-        colorsVBO.getArray().clear();
+        texCoords.getArray().clear();
+        boolean lDefault = true;
         for (int x = 0; x < sizeX; x++) {
             for (int y = 0; y < sizeY; y++) {
                 for (int z = 0; z < sizeZ; z++) {
+                    Tile tile = Tile.getTileById(tiles[x][y][z]);
+                    if(!tile.isActive())
+                    {
+                        continue;
+                    }
 
-                        if (tiles[x][y][z] != 0) {
-                            //texCoords.getArray().addAll(Arrays.asList(MathUtils.getTexCoords(tiles[x][y][z], ((SpriteSheet) getTexture()).getSize(), getTexture().getHeight())));
-                            colorsVBO.getArray().addAll(Arrays.asList(MathUtils.getCubeColors(tiles[x][y][z])));
-                            verticesVBO.getArray().addAll(Arrays.asList(MathUtils.createCubeShape(x, y, z, 1)));
-                        }
+                    boolean lXNegative = lDefault;
+                    if(x > 0)
+                        lXNegative =  !Tile.getTileById(tiles[x-1][y][z]).isActive();
+
+                    boolean lXPositive = lDefault;
+                    if(x < CHUNKSIZE - 1)
+                        lXPositive =  !Tile.getTileById(tiles[x+1][y][z]).isActive();
+                    boolean lYNegative = lDefault;
+                    if(y > 0)
+                        lYNegative =  !Tile.getTileById(tiles[x][y-1][z]).isActive();
+                    boolean lYPositive = lDefault;
+                    if(y < CHUNKHEIGHTLIMIT - 1)
+                        lYPositive = !Tile.getTileById(tiles[x][y+1][z]).isActive();
+
+                    boolean lZNegative = lDefault;
+                    if(z > 0)
+                        lZNegative = !Tile.getTileById(tiles[x][y][z-1]).isActive();
+
+                    boolean lZPositive = lDefault;
+                    if(z < CHUNKSIZE - 1)
+                        lZPositive =  !Tile.getTileById(tiles[x][y][z+1]).isActive();
+                    texCoords.getArray().addAll(Arrays.asList(Shape.getTexCoords(tiles[x][y][z], ((SpriteSheet) getTexture()).getSize(), getTexture().getHeight(),lZNegative,lZPositive,lXPositive,lXNegative,lYPositive,lYNegative)));
+                    verticesVBO.getArray().addAll(Arrays.asList(Shape.createCubeShape(x, y, z, 1,lZNegative,lZPositive,lXPositive,lXNegative,lYPositive,lYNegative)));
+
+
+
+
 
                 }
             }
         }
-        colorsVBO.update();
         verticesVBO.update();
+        texCoords.update();
     }
-    private void checkTileInView(){
+    public void checkInView(Renderer renderer){
+        Matrix4f camera = Camera.getMatrixS();
+        Matrix4f perspective = renderer.getProjection();
+        Matrix4f frustrum =perspective.mul(camera,new Matrix4f());
+        FrustumIntersection intersection = new FrustumIntersection(frustrum);
+        isActive = intersection.testAab(pos,pos.add(CHUNKSIZE,CHUNKHEIGHTLIMIT,CHUNKSIZE, new Vector3f()));
+        chunkModel.isActive = intersection.testAab(pos,pos.add(CHUNKSIZE,CHUNKHEIGHTLIMIT,CHUNKSIZE, new Vector3f()));
 
     }
     public enum BlockSide{
-        UP,DOWN,LEFT,RIGHT,FRONT,BACK,NONE
+        TOP("top"), BOTTOM("bottom"),LEFT("left"),RIGHT("right"),FRONT("front"),BACK("back"),NONE("none");
+        String s;
+        BlockSide(String s){
+            this.s = s;
+        }
+
+        @Override
+        public String toString() {
+            return s;
+        }
     }
 
     private BlockSide getBlockSide(float closestDistance, AABBf box){

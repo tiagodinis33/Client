@@ -22,5 +22,5 @@ void main(){
         } else {
             fragColor = material.color;
         }
-
+        //if(!gl_FrontFacing) fragColor = vec4(1.0f,0.0f,0.0f,1.0f);
     }

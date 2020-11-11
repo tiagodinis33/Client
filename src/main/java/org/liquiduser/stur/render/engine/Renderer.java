@@ -4,14 +4,11 @@ import static org.lwjgl.opengl.GL33.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 
-import org.joml.Vector3f;
 import org.liquiduser.Stur;
 import org.liquiduser.stur.engine.Model;
 import org.liquiduser.stur.lighning.Light;
-import org.liquiduser.stur.math.VectorMath;
 import org.liquiduser.stur.render.internal.VBO;
 import org.joml.Matrix4f;
 
@@ -70,20 +67,20 @@ public class Renderer {
     public void setModels(List<Model> models) {
 		this.models = models;
 	}
-    public boolean is2D;
+    public boolean useCameraMatrix = true;
     public boolean useIndex = true;
     public void render() {
 
         for (Model model : models){
             if(model.isActive){
-                if (!is2D) {
+                if (depthTestingEnabled) {
                     glEnable(GL_DEPTH_TEST);
                     glDepthFunc(GL_LESS);
                 }
                 glEnable(GL_BLEND);
                 glBlendEquation(GL_FUNC_ADD);
-
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
                 glBindVertexArray(model.getVaoID());
                 for (VBO buffer : model.getBuffers()) {
                     glEnableVertexAttribArray(buffer.getSlot());
@@ -101,8 +98,9 @@ public class Renderer {
                 }
                 model.getProgram().setUniform("perspective", getProjection());
 
-                model.getProgram().setUniform("camera", is2D ? new Matrix4f() : Camera.getMatrix());
+                model.getProgram().setUniform("camera", !useCameraMatrix ? new Matrix4f() : Camera.getMatrixS());
                 model.getProgram().setUniform("transform", model.getTransformationMatrix());
+
                 if (useIndex) {
                     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, model.getIndex().getId());
 

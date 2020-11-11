@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class VectorMath {
+public class ArrayUtils {
     public static Vector3f cross(Vector3f vec, Vector3f vec1){
         Vector3f result = new Vector3f();
         vec1.cross(vec, result);
@@ -15,9 +15,7 @@ public class VectorMath {
 
     public static Float[] toArrayf(List<Float> list){
         Float[] array = new Float[list.size()];
-        for (int x = 0; x < list.size(); x++) {
-            array[x] = list.get(x);
-        }
+        list.toArray(array);
         return array;
     }
     public static Vector3f[] toArrayVec3f(List<Vector3f> list){
