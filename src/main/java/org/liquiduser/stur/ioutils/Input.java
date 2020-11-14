@@ -11,6 +11,18 @@ public class Input {
     static ArrayList<Boolean> lastKeys = new ArrayList<>();
     private static double scrollY;
     private static double scrollX;
+    private static double scrollDeltaY;
+    private static double scrollDeltaX;
+
+    public static double getScrollDeltaX() {
+        return scrollDeltaX;
+    }
+
+    public static double getScrollDeltaY() {
+        return scrollDeltaY;
+    }
+
+    private Input(){}
     public static void create(){
         for(int i = 0; i< GLFW_KEY_LAST; i++){
             lastKeys.add(false);
@@ -19,8 +31,8 @@ public class Input {
             lastButtons.add(false);
         }
         glfwSetScrollCallback(getWindow(), (window, xoffset, yoffset) ->{
-            scrollX = xoffset;
-            scrollY = yoffset;
+            scrollX += xoffset;
+            scrollY += yoffset;
         });
         glfwSetCursorPosCallback(getWindow(), new GLFWCursorPosCallback() {
             @Override
@@ -47,7 +59,8 @@ public class Input {
     public static double getScrollX(){
         return scrollX;
     }
-
+    private static double lastScrollY;
+    private static double lastScrollX;
     public static void update(){
         for(int i = 0; i< GLFW_KEY_LAST; i++){
             lastKeys.set(i, isKeyDown(i));
@@ -55,6 +68,12 @@ public class Input {
         for (int i = 0; i < GLFW_MOUSE_BUTTON_LAST; i++) {
             lastButtons.set(i, isButtonDown(i));
         }
+        double newScrollX = getScrollX();
+        double newScrollY = getScrollY();
+        scrollDeltaY = newScrollY - lastScrollY;
+        scrollDeltaX = newScrollX - lastScrollX;
+        lastScrollY = newScrollY;
+        lastScrollX = newScrollX;
     }
     public static int getMouseY(){
         return (int)cursorY;

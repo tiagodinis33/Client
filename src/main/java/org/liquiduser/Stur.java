@@ -23,6 +23,7 @@ import org.lwjgl.opengl.GL33;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Random;
 
 import static org.lwjgl.glfw.GLFW.*;
 
@@ -62,9 +63,10 @@ final public class Stur extends Thread {
     private static Stur engine;
     Client client;
     Integer id = null;
-    Player player;
-    World world;
+    public Player thePlayer;
+    public World theWorld;
     GuiScreen guiScreen;
+
     Light light = new Light(new Vector3f(0, -0.5f, 1), new Vector3f(1), 1f);
     private boolean fullscreen = false;
     private float width;
@@ -116,6 +118,7 @@ final public class Stur extends Thread {
         cleanup();
     }
     boolean wereLines;
+
     private void update() {
         glfwPollEvents();
         glfwSwapBuffers(window);
@@ -123,10 +126,10 @@ final public class Stur extends Thread {
         if (guiScreen != null) {
             guiScreen.update();
         }
-        player.raytraceBlock(world);
+        thePlayer.raytraceBlock();
         if (Input.isButtonPressed(0))
-            if (player.getSelectedBlock() != null)
-                player.breakBlock();
+            if (thePlayer.getSelectedBlock() != null)
+                thePlayer.breakBlock();
         if(Input.isKeyPressed(GLFW_KEY_F6)){
             wereLines = !wereLines;
             if(wereLines){
@@ -137,15 +140,83 @@ final public class Stur extends Thread {
                 GL11.glPolygonMode(GL11.GL_FRONT_AND_BACK, GL11.GL_FILL);
             }
         }
-        if(Input.isButtonPressed(GLFW_MOUSE_BUTTON_RIGHT))
-            player.placeBlock(Tile.grass);
 
+        if(Input.isButtonPressed(GLFW_MOUSE_BUTTON_RIGHT)) {
+            Tile selectedTile = thePlayer.getInventory().get(thePlayer.getSelectedSlot());
+            thePlayer.placeBlock(selectedTile);
+        }
+
+        for(int i = 0; i<9; i++){
+            if(Input.isKeyPressed(49+i)){
+                thePlayer.setSelectedSlot(i);
+            }
+        }
+        float v = Input.isKeyDown(GLFW_KEY_LEFT_CONTROL)? vel * 2 : vel;
+
+        if (Input.isKeyPressed(GLFW_KEY_F) ) {
+            Input.setMouseLocked(!Input.isMouseLocked());
+        }
+        if (Input.isKeyPressed(GLFW_KEY_F11) ) {
+            getEngine().setFullscreen(!getEngine().isFullscreen());
+        }
+        float x = (float) Math.sin(Math.toRadians(Camera.active.getRotation().y)) * v;
+        float z = (float) Math.cos(Math.toRadians(Camera.active.getRotation().y)) * v;
+
+        double newMouseX = (float) Input.getMouseX();
+        double newMouseY = (float) Input.getMouseY();
+
+        if (Input.isKeyDown(GLFW_KEY_W)) {
+            Camera.active.getPosition().x -= x;
+            Camera.active.getPosition().z -= z;
+        }
+        if (Input.isKeyDown(GLFW_KEY_S)) {
+            Camera.active.getPosition().x -= -x;
+            Camera.active.getPosition().z -= -z;
+        }
+        if (Input.isKeyDown(GLFW_KEY_A)) {
+            Camera.active.getPosition().x -= z;
+            Camera.active.getPosition().z -= -x;
+        }
+        if (Input.isKeyDown(GLFW_KEY_D) ) {
+            Camera.active.getPosition().x -= -z;
+            Camera.active.getPosition().z -= x;
+        }
+        if (Input.isKeyDown(GLFW_KEY_SPACE)) {
+            Camera.active.getPosition().y -= -vel;
+        }
+        if (Input.isKeyDown(GLFW_KEY_LEFT_SHIFT)
+                || Input.isKeyDown(GLFW_KEY_RIGHT_SHIFT)) {
+            Camera.active.getPosition().y -= vel;
+        }
+        if(Input.isKeyPressed(GLFW_KEY_R)){
+            theWorld.generateTerrain(new Random().nextInt(10000));
+
+            thePlayer = new Player(theWorld);
+            Camera.active = thePlayer.getCamera();
+
+        }
+        float dx = (float) (newMouseX - oldMouseX);
+        float dy = (float) (newMouseY - oldMouseY);
+
+        if (Input.isMouseLocked()) {
+            Camera.active.getRotation().x = Math.max(-90f,
+                    Math.min(90f, Camera.active.getRotation().x + (-dy * mouseSensitivity)));
+            Camera.active.getRotation().y = Camera.active.getRotation().y + (-dx * mouseSensitivity);
+
+        }
+        oldMouseX = newMouseX;
+        oldMouseY = newMouseY;
+        thePlayer.setSelectedSlot((int) (thePlayer.getSelectedSlot()-Input.getScrollDeltaY()));
         FPScounter.ProcessCounter();
 
         Input.update();
 
     }
 
+    private double oldMouseX;
+    private double oldMouseY;
+    private float vel= 0.2f;
+    private float mouseSensitivity = 0.2f;
     private void runGameLoop() {
         FPScounter.StartCounter();
         //GL11.glClearColor(0.0f, 1.0f, 1.0f, 0.0f);
@@ -163,7 +234,7 @@ final public class Stur extends Thread {
     }
 
     private void renderEntities() {
-        EntityRenderer.renderBlockOverlay(player);
+        EntityRenderer.renderBlockOverlay(thePlayer);
     }
 
     private void renderGui() {
@@ -173,19 +244,20 @@ final public class Stur extends Thread {
     }
 
     private void renderWorld() {
-        world.render();
+        theWorld.render();
     }
 
     public void cleanup() {
         for (Resource resource : Resource.resources) {
             resource.cleanup();
         }
+        glfwTerminate();
         try {
             client.getSocket().close();
-        } catch (IOException e) {
+        } catch (IOException| NullPointerException e) {
             e.printStackTrace();
         }
-        glfwTerminate();
+
     }
 
     public void reverseArrayList(List<Float> alist) {
@@ -201,24 +273,26 @@ final public class Stur extends Thread {
     }
 
     private void postStart() {
-        world = new World();
-        Chunk chunk1 = new Chunk(0, 0, 0);
-        chunk1.create();
-        Chunk chunk2 = new Chunk(2, 0, 2);
-        chunk2.create();
-        world.chunks.add(chunk1);
-        world.chunks.add(chunk2);
-        displayGuiScreen(new InGameMenu());
-        player = new Player();
-        Camera.active = player.getCamera();
+        theWorld = new World();
 
+        int worldSize = 4;
+        for(int x= 0; x < worldSize; x++)
+            for(int z= 0; z < worldSize; z++){
+                Chunk chunk = new Chunk(x, z);
+                chunk.create();
+                theWorld.add(chunk);
+            }
+
+        theWorld.generateTerrain(new Random().nextInt(10000));
+
+        thePlayer = new Player(theWorld);
+        Camera.active = thePlayer.getCamera();
+        displayGuiScreen(new InGameMenu());
         try {
             client = new Client("localhost:8080");
             id = client.readObject();
             System.out.println(id);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
     }

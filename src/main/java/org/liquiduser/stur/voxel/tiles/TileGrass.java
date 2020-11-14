@@ -11,6 +11,5 @@ public class TileGrass extends Tile{
         texCoordsright.x = 2;
         texCoordsleft.x = 2;
         texCoordsbottom.x = 3;
-        isActive = true;
     }
 }

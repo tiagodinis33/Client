@@ -20,6 +20,15 @@ public class Texture extends Resource {
     public Texture() throws IOException {
         this("misc/default");
     }
+    public static Texture DEFAULT_TEXTURE;
+
+    static {
+        try {
+            DEFAULT_TEXTURE = new Texture().create(MipMap.NEAREST);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     @Override
     public void create() {

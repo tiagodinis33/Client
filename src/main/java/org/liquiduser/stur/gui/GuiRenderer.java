@@ -12,8 +12,11 @@ import org.liquiduser.stur.render.engine.Renderer;
 import org.liquiduser.stur.render.internal.VBO;
 import org.lwjgl.opengl.GL11;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 
 public class GuiRenderer {
 
@@ -93,8 +96,9 @@ public class GuiRenderer {
     static HashMap<String, Model> quadsCached = new HashMap<>();
     static HashMap<String, Texture> textureCached = new HashMap<>();
     public static void renderTexture(int x, int y, int width,int height,int u, int v, String location){
-        Model m;
-        Texture t;
+        Model m = null;
+        Texture t = null;
+        boolean flag = false;
         try {
             if(!quadsCached.containsKey(location)){
                 var mm = new Model(index,shader);
@@ -109,13 +113,92 @@ public class GuiRenderer {
             m = quadsCached.get(location);
 
             if(!textureCached.containsKey(location)){
-                textureCached.put(location, Texture.get(location, Texture.MipMap.LINEAR));
+                textureCached.put(location, Texture.get(location, Texture.MipMap.NEAREST));
             }
             t = textureCached.get(location);
 
-        } catch (Exception e) {
+        }catch(IOException | IllegalArgumentException e){
             e.printStackTrace();
-            return;
+
+            flag = true;
+
+        }
+        if(flag) {
+            t =Texture.DEFAULT_TEXTURE;
+
+        }
+        if(!m.isCreated()){
+            m.create();
+        }
+        if(m.getMaterial().getTexture() != t){
+            m.getMaterial().setTexture(t);
+        }
+        float f = (float)1 /(float) t.getWidth();
+        float f1 = (float)1 / (float)t.getHeight();
+        var pos = m.getBuffers().get(0);
+        m.getMaterial().setColor(new Vector4f(0,0,0,1));
+        List<Float> texCoordsVBO = Arrays.asList(
+                (u * f), ((v + height) * f1),
+                ((u + width) * f), ((v + height) * f1),
+                ((u + width) * f), (v * f1),
+                (u * f), (v * f1)
+        );
+        if(!m.getBuffers().get(1).getArray().equals(texCoordsVBO)){
+            m.getBuffers().get(1).getArray().clear();
+            m.getBuffers().get(1).getArray().addAll(texCoordsVBO);
+            m.getBuffers().get(1).update();
+        }
+        List<Float> vertsVBO = Arrays.asList(
+                (float)x, (float)(y + height), (float)0,
+                (float)(x + width), (float)(y + height), (float)0,
+                (float)(x + width),(float) y, (float)0,
+                (float)x, (float)y ,(float) 0
+        );
+        if(!pos.getArray().equals(vertsVBO)){
+            pos.getArray().clear();
+            pos.getArray().addAll(vertsVBO);
+            pos.update();
+        }
+
+
+        var renderer = new Renderer(new ArrayList<>());
+        renderer.models.add(m);
+        renderer.useCameraMatrix = false;
+        renderer.setProjection(new Matrix4f().ortho2D(0,Stur.getEngine().getWidth(),Stur.getEngine().getHeight(),0));
+        renderer.setDepthTestingEnabled(false);
+        renderer.render();
+    }
+    public static void renderTexture(int x, int y, int width,int height, int widtht,int heightt,int u, int v, String location){
+        Model m = null;
+        Texture t = null;
+        boolean flag = false;
+        try {
+            if(!quadsCached.containsKey(location)){
+                var mm = new Model(index,shader);
+                quadsCached.put(location, mm);
+                var vbo = new PositionVBO();
+                vbo.create();
+
+                mm.create();
+                mm.addVBO(vbo);
+                mm.addVBO(new VBO(1,2));
+            }
+            m = quadsCached.get(location);
+
+            if(!textureCached.containsKey(location)){
+                textureCached.put(location, Texture.get(location, Texture.MipMap.NEAREST));
+            }
+            t = textureCached.get(location);
+
+        }catch(IOException | IllegalArgumentException e){
+            e.printStackTrace();
+
+            flag = true;
+
+        }
+        if(flag) {
+            t =Texture.DEFAULT_TEXTURE;
+
         }
         if(!m.isCreated()){
             m.create();
@@ -140,9 +223,9 @@ public class GuiRenderer {
 
         pos.set(
 
-                x, (y + height), 0,
-                (x + width), (y + height), 0,
-                (x + width), y, 0,
+                x, (y + heightt), 0,
+                (x + widtht), (y + heightt), 0,
+                (x + widtht), y, 0,
                 x, y , 0
         );
         pos.update();

@@ -6,20 +6,29 @@ import java.util.ArrayList;
 
 public class Tile {
     byte id;
-    public static TileAir air;
-    public static TileGrass grass;
-    public static ArrayList<Tile> tiles;
-    static {
-        tiles = new ArrayList<>();
-
-        air =  new TileAir();
-        grass =  new TileGrass();
-
-    }
-    boolean isActive;
+    public static ArrayList<Tile> tiles = new ArrayList<>();
+    public static TileAir air = new TileAir();
+    public static TileGrass grass = new TileGrass();
+    public static TileStone stone = new TileStone();
+    public static TileDirt dirt = new TileDirt();
+    boolean isActive = true;
     public Tile(byte id){
         this.id = id;
         tiles.add(this);
+    }
+    public void setTexCoordsAllSides(int x, int y){
+        texCoordsback.x = x;
+        texCoordsback.y = y;
+        texCoordsbottom.x = x;
+        texCoordsbottom.y = y;
+        texCoordsright.x = x;
+        texCoordsright.y = y;
+        texCoordsleft.x = x;
+        texCoordsleft.y = y;
+        texCoordstop.x = x;
+        texCoordstop.y = y;
+        texCoordsfront.x = x;
+        texCoordsfront.y = y;
     }
     public static Tile getTileById(byte id){
         for(var tile: tiles){

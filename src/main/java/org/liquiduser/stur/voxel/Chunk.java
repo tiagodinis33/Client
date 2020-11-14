@@ -11,6 +11,7 @@ import org.liquiduser.stur.render.engine.Renderer;
 import org.liquiduser.stur.render.internal.VBO;
 import org.liquiduser.stur.math.Shape;
 import org.liquiduser.stur.utils.SpriteSheet;
+import org.liquiduser.stur.vendor.FastNoiseLite;
 import org.liquiduser.stur.voxel.tiles.Tile;
 
 import java.io.IOException;
@@ -19,7 +20,7 @@ import java.util.Arrays;
 public class Chunk
 extends Resource
 {
-    private static final int CHUNKSIZE = 16;
+    public static final int CHUNKSIZE = 16;
     private static GLSLProgram shader;
 
     static {
@@ -29,8 +30,8 @@ extends Resource
             e.printStackTrace();
         }
     }
-    VBO verticesVBO;
-    VBO texCoords;
+    private VBO verticesVBO;
+    private VBO texCoords;
     public static final int CHUNKHEIGHTLIMIT = 256;
     public Texture getTexture(){
         return chunkModel.getMaterial().getTexture();
@@ -39,7 +40,6 @@ extends Resource
     public void create() {
         super.create();
 
-        boolean lDefault = true;
         sizeX = CHUNKSIZE;
         sizeY = CHUNKHEIGHTLIMIT;
         sizeZ = CHUNKSIZE;
@@ -57,21 +57,10 @@ extends Resource
         } catch (IOException e) {
             e.printStackTrace();
         }
-        for (int x = 0; x < sizeX; x++) {
-            for (int y = 0; y < sizeY; y++) {
-                for (int z = 0; z < sizeZ; z++) {
-                    if(y <=(CHUNKSIZE)){
-                        tiles[x][y][z] = 1;
-                    }
 
 
-                }
-            }
-        }
         rebuild();
         chunkModel.getPosition().set(pos);
-        verticesVBO.update();
-        texCoords.update();
     }
 
     @Override
@@ -86,11 +75,15 @@ extends Resource
     /** Model correspondente a este chunk*/
     Model chunkModel;
     Vector3f pos;
-    public Chunk(float x, float y, float z){
-        this(new Vector3f(x,y,z));
+    public Chunk(float x, float z){
+        this(new Vector2f(x,z));
     }
     public Chunk(Vector3f v){
         pos = v.mul(16, new Vector3f());
+        pos.y = 0;
+    }
+    public Chunk(Vector2f vec){
+        pos = new Vector3f(vec.x,0,vec.y).mul(16);
     }
     public Vector3i getSize(){
         return new Vector3i(sizeX,sizeY,sizeZ);
@@ -98,7 +91,9 @@ extends Resource
     public Vector3f getPos() {
         return pos;
     }
-
+    public Vector3f getDivPos() {
+        return new Vector3f(pos.x/16,0,pos.z/16);
+    }
     public byte[][][] getTiles() {
         return tiles;
     }
@@ -174,10 +169,16 @@ extends Resource
     public void checkInView(Renderer renderer){
         Matrix4f camera = Camera.getMatrixS();
         Matrix4f perspective = renderer.getProjection();
-        Matrix4f frustrum =perspective.mul(camera,new Matrix4f());
-        FrustumIntersection intersection = new FrustumIntersection(frustrum);
-        isActive = intersection.testAab(pos,pos.add(CHUNKSIZE,CHUNKHEIGHTLIMIT,CHUNKSIZE, new Vector3f()));
-        chunkModel.isActive = intersection.testAab(pos,pos.add(CHUNKSIZE,CHUNKHEIGHTLIMIT,CHUNKSIZE, new Vector3f()));
+        Matrix4f frustrum =new Matrix4f();
+        frustrum.set(perspective);
+
+        frustrum.mul(camera);
+        FrustumIntersection intersection = new FrustumIntersection();
+        intersection.set(frustrum);
+        boolean inView = intersection.testAab(pos, pos.add(CHUNKSIZE,CHUNKHEIGHTLIMIT,CHUNKSIZE, new Vector3f()));
+        boolean InRenderDistance = Camera.active.getPosition().distance(pos.add(CHUNKSIZE/2f,Camera.active.getPosition().y,CHUNKSIZE/2f, new Vector3f()))<= 4*16;
+        isActive =inView && InRenderDistance;
+        chunkModel.isActive = inView && InRenderDistance;
 
     }
     public enum BlockSide{
