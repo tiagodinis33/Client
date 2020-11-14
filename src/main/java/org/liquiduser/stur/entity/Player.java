@@ -1,15 +1,16 @@
 package org.liquiduser.stur.entity;
 
 import org.joml.*;
+import org.joml.Random;
 import org.liquiduser.stur.voxel.World;
 import org.liquiduser.stur.render.engine.Camera;
 import org.liquiduser.stur.voxel.Chunk;
 import org.liquiduser.stur.voxel.Chunk.BlockSide;
 import org.liquiduser.stur.voxel.tiles.Tile;
+import org.liquiduser.stur.voxel.tiles.TileAir;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.lang.Math;
+import java.util.*;
 
 public class Player {
     Vector3i selected;
@@ -32,20 +33,48 @@ public class Player {
 
     private Vector3f calculateSpawn() {
         Random random = new Random();
-        int xR = random.nextInt(world.getChunks().length);
-        int zR = random.nextInt(world.getChunks()[xR].length);
-        Chunk chunk = world.getChunks()[xR][zR];
-        int xTile = random.nextInt(16);
-        int zTile = random.nextInt(16);
-        int xc = xTile *(xR+1);
-        int zc = zTile *(zR+1);
-        byte[][][] tiles = chunk.getTiles();
-        for (int y = 0; y< Chunk.CHUNKHEIGHTLIMIT; y++){
-            if(tiles[xTile][y][zTile] == (byte)0
-                    && tiles[xTile][y+1][zTile] ==  (byte)0
-                    && tiles[xTile][y+2][zTile] ==  (byte)0
-            ){
-                return new Vector3f(xc+0.5f,y+1.75f,zc+0.5f);
+        //positive spawn
+        int xSize = 0;
+        for(Map.Entry<Integer, HashMap<Integer, Chunk>> entry : world.getChunks().entrySet()){
+            if(entry.getKey() >0){
+                xSize++;
+            }
+        }
+        int x = random.nextInt(Chunk.CHUNKSIZE*xSize);
+        int zSize = 0;
+        for(Map.Entry<Integer, Chunk> entry : world.getChunks().get(x/16).entrySet()){
+            if(entry.getKey() >0){
+                zSize++;
+            }
+        }
+        int z = random.nextInt(Chunk.CHUNKSIZE*zSize);
+
+        //negative spawn
+        int xnSize = 0;
+        for(Map.Entry<Integer, HashMap<Integer, Chunk>> entry : world.getChunks().entrySet()){
+            if(entry.getKey() <0){
+                xnSize++;
+            }
+        }
+        int xn = random.nextInt(Chunk.CHUNKSIZE*xnSize);
+        int znSize = 0;
+        for(Map.Entry<Integer, Chunk> entry : world.getChunks().get(-(xn/16)).entrySet()){
+            if(entry.getKey() <0){
+                znSize++;
+            }
+        }
+        int zn = random.nextInt(Chunk.CHUNKSIZE*znSize);
+        boolean negative = new java.util.Random().nextBoolean() && xSize == 0 && zSize == 0;
+        for(int y = 0; y < Chunk.CHUNKHEIGHTLIMIT; y++){
+            try {
+                if(
+                        world.getTile(negative?-xn:x,y,negative?-zn:z) instanceof TileAir &&
+                        world.getTile(negative?-xn:x,y+1,negative?-zn:z) instanceof TileAir
+                ){
+                    return new Vector3f( (negative?-xn:x)+0.5f,y+1.75f,(negative?-zn:z)+0.5f);
+                }
+            } catch (World.ChunkNotFoundException e) {
+                e.printStackTrace();
             }
         }
         return null;
@@ -164,7 +193,7 @@ public class Player {
 
                         break;
                     case RIGHT:
-                        if (selected.x + 1 == 16 && (neighborChunk = world.getChunkAt(selectedChunk.getDivPos().add(1, 0, 0))) != null) {
+                        if (selected.x + 1 == Chunk.CHUNKSIZE && (neighborChunk = world.getChunkAt(selectedChunk.getDivPos().add(1, 0, 0))) != null) {
                             neighborChunk.setTile(0, selected.y, selected.z, tile.getId());
 
                         } else {
@@ -174,13 +203,13 @@ public class Player {
                         break;
                     case FRONT:
                         if (selected.z - 1 == -1 && (neighborChunk = world.getChunkAt(selectedChunk.getDivPos().sub(0, 0, 1))) != null) {
-                            neighborChunk.setTile(selected.x, selected.y, 15, tile.getId());
+                            neighborChunk.setTile(selected.x, selected.y, Chunk.CHUNKSIZE-1, tile.getId());
                         } else {
                             selectedChunk.setTile(selected.x, selected.y, selected.z - 1, tile.getId());
                         }
                         break;
                     case BACK:
-                        if (selected.z + 1 == 16 && (neighborChunk = world.getChunkAt(selectedChunk.getDivPos().add(0, 0, 1))) != null) {
+                        if (selected.z + 1 == Chunk.CHUNKSIZE && (neighborChunk = world.getChunkAt(selectedChunk.getDivPos().add(0, 0, 1))) != null) {
                             neighborChunk.setTile(selected.x, selected.y, 0, tile.getId());
                         } else {
                             selectedChunk.setTile(selected.x, selected.y, selected.z + 1, tile.getId());

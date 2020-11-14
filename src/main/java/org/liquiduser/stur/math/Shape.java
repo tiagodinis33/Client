@@ -101,33 +101,33 @@ public class Shape {
         Vector2i coordsleft = Tile.getTileById(b).getTexCoordsleft();
         float xtop = (float)(coordstop.x * size)/(float)imageSize;
         float ytop = (float)(coordstop.y * size)/(float)imageSize;
-        float xRighttop = (float)(coordstop.x * size+16)/(float)imageSize;
-        float  yBottomtop = (float)(coordstop.y * size+16)/(float)imageSize;
+        float xRighttop = (float)(coordstop.x * size+size)/(float)imageSize;
+        float  yBottomtop = (float)(coordstop.y * size+size)/(float)imageSize;
 
         float xbottom = (float)(coordsbottom.x * size)/(float)imageSize;
         float ybottom = (float)(coordsbottom.y * size)/(float)imageSize;
-        float xRightbottom = (float)(coordsbottom.x * size+16)/(float)imageSize;
-        float  yBottombottom = (float)(coordsbottom.y * size+16)/(float)imageSize;
+        float xRightbottom = (float)(coordsbottom.x * size+size)/(float)imageSize;
+        float  yBottombottom = (float)(coordsbottom.y * size+size)/(float)imageSize;
 
         float xright = (float)(coordsright.x * size)/(float)imageSize;
         float yright = (float)(coordsright.y * size)/(float)imageSize;
-        float xRightright = (float)(coordsright.x * size+16)/(float)imageSize;
-        float  yBottomright = (float)(coordsright.y * size+16)/(float)imageSize;
+        float xRightright = (float)(coordsright.x * size+size)/(float)imageSize;
+        float  yBottomright = (float)(coordsright.y * size+size)/(float)imageSize;
 
         float xleft = (float)(coordsleft.x * size)/(float)imageSize;
         float yleft = (float)(coordsleft.y * size)/(float)imageSize;
-        float xRightleft = (float)(coordsleft.x * size+16)/(float)imageSize;
-        float  yBottomleft = (float)(coordsleft.y * size+16)/(float)imageSize;
+        float xRightleft = (float)(coordsleft.x * size+size)/(float)imageSize;
+        float  yBottomleft = (float)(coordsleft.y * size+size)/(float)imageSize;
 
         float xfront = (float)(coordsfront.x * size)/(float)imageSize;
         float yfront = (float)(coordsfront.y * size)/(float)imageSize;
-        float xRightfront = (float)(coordsfront.x * size+16)/(float)imageSize;
-        float  yBottomfront = (float)(coordsfront.y * size+16)/(float)imageSize;
+        float xRightfront = (float)(coordsfront.x * size+size)/(float)imageSize;
+        float  yBottomfront = (float)(coordsfront.y * size+size)/(float)imageSize;
 
         float xback = (float)(coordsback.x * size)/(float)imageSize;
         float yback = (float)(coordsback.y * size)/(float)imageSize;
-        float xRightback = (float)(coordsback.x * size+16)/(float)imageSize;
-        float  yBottomback = (float)(coordsback.y * size+16)/(float)imageSize;
+        float xRightback = (float)(coordsback.x * size+size)/(float)imageSize;
+        float  yBottomback = (float)(coordsback.y * size+size)/(float)imageSize;
         ArrayList<Float> coords = new ArrayList<>();
         if(front){
             coords.addAll(Arrays.asList(

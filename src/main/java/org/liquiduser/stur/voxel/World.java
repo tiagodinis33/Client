@@ -6,36 +6,41 @@ import org.liquiduser.stur.engine.Model;
 import org.liquiduser.stur.render.engine.Renderer;
 import org.liquiduser.stur.vendor.FastNoiseLite;
 import org.liquiduser.stur.voxel.tiles.Tile;
+import org.ode4j.ode.DWorld;
+import org.ode4j.ode.OdeHelper;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 public class World implements Iterable<Chunk> {
-    private Chunk[][] chunks = new Chunk[0][0];
+    private final HashMap<Integer, HashMap<Integer, Chunk>> chunks = new HashMap<>();
+    DWorld odeWorld = OdeHelper.createWorld();
 
     public Chunk add(Chunk chunk) {
-        if (chunk.getDivPos().x >= chunks.length) {
-            chunks = Arrays.copyOf(chunks, (int) chunk.getDivPos().x + 1);
-            chunks[(int) chunk.getDivPos().x] = new Chunk[0];
-        }
-        if (chunk.getDivPos().z >= chunks[(int) chunk.getDivPos().x].length)
-            chunks[(int) chunk.getDivPos().x] = Arrays.copyOf(chunks[(int) chunk.getDivPos().x], (int) chunk.getDivPos().z + 1);
-        chunks[(int) chunk.getDivPos().x][(int) chunk.getDivPos().z] = chunk;
+        chunks.put((int) chunk.getDivPos().x, chunks.getOrDefault((int) chunk.getDivPos().x, new HashMap<>()));
+        chunks.get((int) chunk.getDivPos().x).put((int) chunk.getDivPos().z, chunk);
         return chunk;
     }
 
     public Chunk getChunkByTilePos(int x, int z) throws ChunkNotFoundException {
-        Vector2f chunkPos = new Vector2f(x / 16, z / 16);
+        Vector2f chunkPos = new Vector2f(x / Chunk.CHUNKSIZE, z / Chunk.CHUNKSIZE);
         return getChunkAt(chunkPos);
     }
 
     public void setTile(int x, int y, int z, byte tile) throws ChunkNotFoundException {
-        Vector2f chunkPos = new Vector2f(x / 16, z / 16);
-        Chunk chunk = getChunkAt(chunkPos);
-        Vector3f blockPosInChunk = new Vector3f(x - (chunkPos.x * 16), y, z - (chunkPos.y * 16));
+        Chunk chunk = getChunkByTilePos(x, z);
+        Vector2f chunkPos = new Vector2f(chunk.getDivPos().x, chunk.getDivPos().z);
+        Vector3f blockPosInChunk = new Vector3f(x - (chunkPos.x * Chunk.CHUNKSIZE), y, z - (chunkPos.y * Chunk.CHUNKSIZE));
+        if(x <0){
+            blockPosInChunk.x = (Chunk.CHUNKSIZE-1) - Math.abs(blockPosInChunk.x);
+        }
+        if(z <0){
+            blockPosInChunk.z = (Chunk.CHUNKSIZE-1) - Math.abs(blockPosInChunk.z);
+        }
         try {
-            chunk.setTile((int) blockPosInChunk.x, (int) blockPosInChunk.y, (int) blockPosInChunk.z, tile);
+            chunk.setTile((int) Math.abs(blockPosInChunk.x), (int) Math.abs(blockPosInChunk.y), (int) Math.abs(blockPosInChunk.z), tile);
 
         } catch (ArrayIndexOutOfBoundsException e) {
             throw new ChunkNotFoundException((int) chunkPos.x, (int) chunkPos.y);
@@ -43,53 +48,58 @@ public class World implements Iterable<Chunk> {
     }
 
     public void generateTerrain(int seed) {
-        FastNoiseLite noise = new FastNoiseLite();
-        noise.SetSeed(seed);
+        FastNoiseLite noise = new FastNoiseLite(seed);
         noise.SetNoiseType(FastNoiseLite.NoiseType.Perlin);
-        for (int i=0; i< chunks.length; i++){
-            for (int j= 0; j< chunks[i].length; j++){
-                for(int x = 0; x< Chunk.CHUNKSIZE;x++ ){
-                    for(int y = 0; y< Chunk.CHUNKHEIGHTLIMIT;y++ ){
-                        for(int z = 0; z< Chunk.CHUNKSIZE;z++ ){
-                            chunks[i][j].tiles[x][y][z] = (byte)0;
+        for (Chunk chunk: this) {
+                for (int x = 0; x < Chunk.CHUNKSIZE; x++)
+                    for (int y = 0; y < Chunk.CHUNKHEIGHTLIMIT; y++)
+                        for (int z = 0; z < Chunk.CHUNKSIZE; z++)
+                            chunk.tiles[x][y][z] = (byte) 0;
+
+
+        }
+        int xnSize = 0;
+        for (Map.Entry<Integer, HashMap<Integer, Chunk>> entry : chunks.entrySet()) {
+            if (entry.getKey() < 0) {
+                xnSize++;
+            }
+        }
+        for (int x = -(xnSize * Chunk.CHUNKSIZE); x < (chunks.size()*Chunk.CHUNKSIZE) - (xnSize*Chunk.CHUNKSIZE); x++) {
+            int znSize = 0;
+            for (Map.Entry<Integer, Chunk> entry : chunks.get(x / 16).entrySet()) {
+                if (entry.getKey() < 0) {
+                    znSize++;
+                }
+            }
+            for (int z = -(znSize*Chunk.CHUNKSIZE); z < (chunks.get(x/16).size()*Chunk.CHUNKSIZE) - (znSize*Chunk.CHUNKSIZE); z++) {
+                float noiseValue = ((noise.GetNoise(x, z) + 1)/2) * (Chunk.CHUNKHEIGHTLIMIT / 10f);
+                try {
+                    setTile(x, Math.round(noiseValue), z, Tile.grass.getId());
+                } catch (ChunkNotFoundException e) {
+                    e.printStackTrace();
+                }
+                for (int y = 0; y < Chunk.CHUNKHEIGHTLIMIT; y++) {
+                    if (y < Math.round(noiseValue)) {
+                        try {
+                            setTile(x, y, z, Tile.dirt.getId());
+                        } catch (ChunkNotFoundException ignored) {
+
+                        }
+                    }
+                    if (y + 4 < Math.round(noiseValue)) {
+                        try {
+                            setTile(x, y, z, Tile.stone.getId());
+                        } catch (ChunkNotFoundException e) {
+                            e.printStackTrace();
                         }
                     }
                 }
-            }
-        }
-
-        for (int x = 0; x < chunks.length * Chunk.CHUNKSIZE; x++) {
-            for (int z = 0; z < chunks[x/16].length * Chunk.CHUNKSIZE; z++) {
-
-                float noiseValue =  (noise.GetNoise(x,z)+1) * (Chunk.CHUNKHEIGHTLIMIT/10f);
-                        try {
-                            setTile(x, Math.round(noiseValue), z, Tile.grass.getId());
-                        } catch (ChunkNotFoundException ignored) {
-                        }
-                        for (int y = 0; y<Chunk.CHUNKHEIGHTLIMIT;y++){
-                            if(y < Math.round(noiseValue)){
-                                try {
-                                    setTile(x,y,z,Tile.dirt.getId());
-                                } catch (ChunkNotFoundException ignored) {
-
-                                }
-                            }
-                            if(y+4 < Math.round(noiseValue)){
-                                try {
-                                    setTile(x,y,z,Tile.stone.getId());
-                                } catch (ChunkNotFoundException ignored) {
-
-                                }
-                            }
-                        }
-
 
             }
         }
-        for (int i=0; i< chunks.length; i++){
-            for (int j= 0; j< chunks[i].length; j++){
-                chunks[i][j].rebuild();
-            }
+        for (Chunk chunk: this) {
+            chunk.rebuild();
+
         }
 
     }
@@ -102,8 +112,8 @@ public class World implements Iterable<Chunk> {
                 this) {
 
             chunk.checkInView(renderer);
-	    if(chunk.isActive)
-            model.add(chunk.chunkModel);
+            if (chunk.isActive)
+                model.add(chunk.chunkModel);
         }
 
         renderer.render();
@@ -111,7 +121,7 @@ public class World implements Iterable<Chunk> {
 
     public Chunk getChunkAt(int x, int z) throws ChunkNotFoundException {
         try {
-            return chunks[x][z];
+            return chunks.get(x).get(z);
         } catch (ArrayIndexOutOfBoundsException e) {
             throw new ChunkNotFoundException(x, z);
         }
@@ -119,20 +129,20 @@ public class World implements Iterable<Chunk> {
 
     public Chunk getChunkAt(Vector3f vec) throws ChunkNotFoundException {
         try {
-            return chunks[(int) vec.x][(int) vec.z];
-        } catch (ArrayIndexOutOfBoundsException e) {
+            return chunks.get((int) vec.x).get((int) vec.z);
+        } catch (NullPointerException e) {
             throw new ChunkNotFoundException((int) vec.x, (int) vec.z);
         }
     }
 
-    public Chunk[][] getChunks() {
+    public HashMap<Integer, HashMap<Integer, Chunk>> getChunks() {
         return chunks;
     }
 
     public Chunk getChunkAt(Vector2f vec) throws ChunkNotFoundException {
         try {
-            return chunks[(int) vec.x][(int) vec.y];
-        } catch (ArrayIndexOutOfBoundsException e) {
+            return chunks.get((int) vec.x).get((int) vec.y);
+        } catch (NullPointerException e) {
             throw new ChunkNotFoundException((int) vec.x, (int) vec.y);
         }
     }
@@ -141,11 +151,26 @@ public class World implements Iterable<Chunk> {
 
     public Iterator<Chunk> iterator() {
         ArrayList<Chunk> chunksArray = new ArrayList<>();
-        for (Chunk[] chunk : chunks) {
-            chunksArray.addAll(Arrays.asList(chunk));
+        for (Map.Entry<Integer, HashMap<Integer, Chunk>> chunk : chunks.entrySet()) {
+            chunksArray.addAll(chunk.getValue().values());
         }
 
         return chunksArray.iterator();
+    }
+
+    public Tile getTile(int x, int y, int z) throws ChunkNotFoundException {
+        Chunk chunk = getChunkByTilePos(x, z);
+        Vector2f chunkPos = new Vector2f(chunk.getDivPos().x, chunk.getDivPos().z);
+        Vector3f blockPosInChunk = new Vector3f(x - (chunkPos.x * Chunk.CHUNKSIZE), y, z - (chunkPos.y * Chunk.CHUNKSIZE));
+        if(x <0){
+            blockPosInChunk.x = (Chunk.CHUNKSIZE-1) - Math.abs(blockPosInChunk.x);
+        }
+        if(z <0){
+            blockPosInChunk.z = (Chunk.CHUNKSIZE-1) - Math.abs(blockPosInChunk.z);
+        }
+
+        return Tile.getTileById(chunk.getTiles()[(int) Math.abs(blockPosInChunk.x)][(int)Math.abs(blockPosInChunk.y)][(int)Math.abs(blockPosInChunk.z)]);
+
     }
 
     public static class ChunkNotFoundException extends Exception {

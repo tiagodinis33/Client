@@ -20,6 +20,12 @@ import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL33;
+import org.ode4j.ode.DWorld;
+import org.ode4j.ode.OdeConfig;
+import org.ode4j.ode.OdeHelper;
+import org.ode4j.ode.internal.ErrorHandler;
+import org.ode4j.ode.internal.ErrorHdl;
+import org.ode4j.ode.internal.OdeInit;
 
 import java.io.IOException;
 import java.util.List;
@@ -273,12 +279,16 @@ final public class Stur extends Thread {
     }
 
     private void postStart() {
+        OdeHelper.initODE();
+        ErrorHdl.dSetErrorHandler((errnum, msg, ap) -> {
+            System.out.println(errnum +": "+ msg);
+        });
         theWorld = new World();
 
         int worldSize = 4;
         for(int x= 0; x < worldSize; x++)
             for(int z= 0; z < worldSize; z++){
-                Chunk chunk = new Chunk(x, z);
+                Chunk chunk = new Chunk(-x,-z);
                 chunk.create();
                 theWorld.add(chunk);
             }
@@ -296,7 +306,6 @@ final public class Stur extends Thread {
             e.printStackTrace();
         }
     }
-
     public void displayGuiScreen(GuiScreen gui) {
         gui.initGui();
         guiScreen = gui;
