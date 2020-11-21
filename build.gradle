@@ -54,7 +54,7 @@ dependencies {
     runtimeOnly "org.lwjgl:lwjgl-stb::$lwjglWindows"
     implementation 'com.google.guava:guava:29.0-jre'
     runtimeOnly "org.lwjgl:lwjgl-stb::$lwjglWindows32"
-    implementation group: "org.ode4j", name: "core", version:"0.4.0"
+    implementation group: "org.slf4j", name: "slf4j-simple", version: "1.7.30"
 }
 
 

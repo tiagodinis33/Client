@@ -73,7 +73,7 @@ public class Player {
                 ){
                     return new Vector3f( (negative?-xn:x)+0.5f,y+1.75f,(negative?-zn:z)+0.5f);
                 }
-            } catch (World.ChunkNotFoundException e) {
+            } catch (World.ChunkNotFoundException | Chunk.TileNotFoundException e) {
                 e.printStackTrace();
             }
         }
@@ -123,7 +123,7 @@ public class Player {
                             selected = new Vector3i(x, y, z);
                             selectedChunk = chunk;
                             side = getBlockSide(closestDistance, aabb,ray);
-
+                            System.out.println(side);
                         }
                     }
                 }
@@ -163,7 +163,11 @@ public class Player {
     }
 
     public void breakBlock(){
-        selectedChunk.setTile(selected.x,selected.y,selected.z, (byte)0);
+        try {
+            selectedChunk.setTile(selected.x,selected.y,selected.z, (byte)0);
+        } catch (Chunk.TileNotFoundException e) {
+            e.printStackTrace();
+        }
         selectedChunk.rebuild();
 
     }
@@ -216,7 +220,7 @@ public class Player {
                         }
                         break;
                 }
-            }catch(World.ChunkNotFoundException ignored){
+            }catch(Chunk.TileNotFoundException | World.ChunkNotFoundException ignored){
             }
             if (neighborChunk != null) {
                 neighborChunk.rebuild();
@@ -229,13 +233,14 @@ public class Player {
     public BlockSide getSelectedSide() {
         return side;
     }
-    private void expand(float e, AABBf aabb){
-        aabb.minX*=1f-e;
-        aabb.minY*=1f-e;
-        aabb.minZ*=1f-e;
-        aabb.maxX*=1f+e;
-        aabb.maxY*=1f+e;
-        aabb.maxZ*=1f+e;
+    private void expand(AABBf aabb){
+        aabb.minX*=1f-(aabb.minX > 0 ? 0.000001f:-0.000001f);
+        aabb.minY*=1f-(aabb.minY > 0 ? 0.000001f:-0.000001f);
+        aabb.minZ*=1f-(aabb.minZ > 0 ? 0.000001f:-0.000001f);
+
+        aabb.maxX*=1f+(aabb.maxX > 0 ? 0.000001f:-0.000001f);
+        aabb.maxY*=1f+(aabb.maxY > 0 ? 0.000001f:-0.000001f);
+        aabb.maxZ*=1f+(aabb.maxZ > 0 ? 0.000001f:-0.000001f);
     }
     private BlockSide getBlockSide(float closestDistance, AABBf aabb, Rayf ray) {
         AABBf back = new AABBf(aabb.minX,aabb.minY,aabb.maxZ,aabb.maxX,aabb.maxY,aabb.maxZ);
@@ -244,12 +249,13 @@ public class Player {
         AABBf left = new AABBf(aabb.minX,aabb.minY,aabb.minZ,aabb.minX,aabb.maxY,aabb.maxZ);
         AABBf top = new AABBf(aabb.minX,aabb.maxY,aabb.minZ,aabb.maxX,aabb.maxY,aabb.maxZ);
         AABBf bottom = new AABBf(aabb.minX,aabb.minY,aabb.minZ,aabb.maxX,aabb.minY,aabb.maxZ);
-        expand(0.000001f,back);
-        expand(0.000001f,front);
-        expand(0.000001f,right);
-        expand(0.000001f,left);
-        expand(0.000001f,top);
-        expand(0.000001f,bottom);
+
+        expand(back);
+        expand(front);
+        expand(right);
+        expand(left);
+        expand(top);
+        expand(bottom);
         Vector2f nearFar = new Vector2f();
         if(Intersectionf.intersectRayAab(ray, back, nearFar) && nearFar.x <= closestDistance)
             return BlockSide.BACK;

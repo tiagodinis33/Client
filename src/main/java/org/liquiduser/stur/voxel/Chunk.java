@@ -22,7 +22,15 @@ extends Resource
 {
     public static final int CHUNKSIZE = 16;
     private static GLSLProgram shader;
+    public static class TileNotFoundException extends Exception {
 
+        public TileNotFoundException(int x, int y,int z) {
+            super(  "At X: " + x
+                    + " Y: " + y
+                    + " Z: " + z);
+        }
+
+    }
     static {
         try {
             shader = GLSLProgram.get("simple");
@@ -97,12 +105,15 @@ extends Resource
     public byte[][][] getTiles() {
         return tiles;
     }
-    public void setTile(int x, int y, int z, byte tileId){
-
-        getTiles()
-                [x]
-                [y]
-                [z] = tileId;
+    public void setTile(int x, int y, int z, byte tileId) throws TileNotFoundException {
+        try{
+            getTiles()
+                    [x]
+                    [y]
+                    [z] = tileId;
+        }catch (ArrayIndexOutOfBoundsException e){
+            throw new TileNotFoundException(x,y,z);
+        }
     }
     public void setPos(Vector3f pos) {
         this.pos = pos;

@@ -224,13 +224,25 @@ final public class Stur extends Thread {
     private float vel= 0.2f;
     private float mouseSensitivity = 0.2f;
     private void runGameLoop() {
-        FPScounter.StartCounter();
-        //GL11.glClearColor(0.0f, 1.0f, 1.0f, 0.0f);
-        GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
-        if (width != 0 && height != 0) {
-            render();
+        try {
+            FPScounter.StartCounter();
+            //GL11.glClearColor(0.0f, 1.0f, 1.0f, 0.0f);
+            GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
+            if (width != 0 && height != 0) {
+                render();
+            }
+            update();
+        } catch(Exception e){
+            System.out.println();
+            System.out.println();
+
+            System.out.println("//HAHA!, Surprise! Well this is awkward");
+
+            System.out.println();
+            System.out.println();
+            e.printStackTrace();
+            glfwSetWindowShouldClose(window, true);
         }
-        update();
     }
 
     private void render() {
@@ -285,9 +297,15 @@ final public class Stur extends Thread {
         });
         theWorld = new World();
 
-        int worldSize = 4;
+        int worldSize = 3;
         for(int x= 0; x < worldSize; x++)
             for(int z= 0; z < worldSize; z++){
+                Chunk chunk = new Chunk(x,z);
+                chunk.create();
+                theWorld.add(chunk);
+            }
+        for(int x= 1; x < worldSize; x++)
+            for(int z= 1; z < worldSize; z++){
                 Chunk chunk = new Chunk(-x,-z);
                 chunk.create();
                 theWorld.add(chunk);
