@@ -3,12 +3,19 @@ package org.liquiduser.stur.voxel;
 import org.joml.Vector2f;
 import org.joml.Vector2i;
 import org.joml.Vector3f;
+import org.liquiduser.Stur;
 import org.liquiduser.stur.engine.Model;
+import org.liquiduser.stur.entity.Player;
+import org.liquiduser.stur.math.PhysicsUtils;
 import org.liquiduser.stur.render.engine.Renderer;
 import org.liquiduser.stur.vendor.FastNoiseLite;
 import org.liquiduser.stur.voxel.tiles.Tile;
+import org.ode4j.math.DMatrix3;
+import org.ode4j.ode.DBody;
 import org.ode4j.ode.DWorld;
 import org.ode4j.ode.OdeHelper;
+import org.ode4j.ode.internal.DxBox;
+import org.ode4j.ode.internal.DxSpace;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
@@ -20,12 +27,21 @@ import java.util.Map;
 
 public class World implements Iterable<Chunk> {
     private final HashMap<Integer, HashMap<Integer, Chunk>> chunks = new HashMap<>();
-    //TODO Add 3D physics
-    DWorld odeWorld = OdeHelper.createWorld();
 
+
+    DxSpace chunksAABBs = (DxSpace) OdeHelper.createSimpleSpace();
+
+    DWorld odeWorld = OdeHelper.createWorld();
+    DBody bodyChunks = OdeHelper.createBody(odeWorld);
+    public World(){
+        odeWorld.setGravity(0,-9.807*1.5f,0);
+        bodyChunks.enable();
+        chunksAABBs.setBody(bodyChunks);
+    }
     public Chunk add(Chunk chunk) {
         chunks.put((int) chunk.getDivPos().x, chunks.getOrDefault((int) chunk.getDivPos().x, new HashMap<>()));
         chunks.get((int) chunk.getDivPos().x).put((int) chunk.getDivPos().z, chunk);
+        rebuildChunkAABBs();
         return chunk;
     }
 
@@ -41,7 +57,19 @@ public class World implements Iterable<Chunk> {
         if(chunk == null) throw new ChunkNotFoundException(chunkPos.x,chunkPos.y);
         return chunk;
     }
+    public void rebuildChunkAABBs(){
+        chunksAABBs.cleanGeoms();
+        for(Chunk chunk : this){
 
+            for (int x = 0; x < Chunk.CHUNKSIZE; x++)
+                for (int y = 0; y < 1; y++)
+                    for (int z = 0; z < Chunk.CHUNKSIZE; z++){
+
+                            DxBox tilebox = DxBox.dCreateBox(chunksAABBs, 0.5,0.5,0.5);
+
+                    }
+        }
+    }
 
     public void generateTerrain(int seed) {
         FastNoiseLite noise = new FastNoiseLite(seed);
@@ -59,7 +87,7 @@ public class World implements Iterable<Chunk> {
             chunk.rebuild();
 
         }
-
+        rebuildChunkAABBs();
     }
 
     public void render() {
@@ -133,6 +161,8 @@ public class World implements Iterable<Chunk> {
                 (int) blockPosInChunk.y,
                 ((int) blockPosInChunk.z),
                 tile);
+        chunk.rebuild();
+        rebuildChunkAABBs();
     }
 
     public Tile getTile(int x, int y, int z) throws Chunk.TileNotFoundException, ChunkNotFoundException {
@@ -158,6 +188,26 @@ public class World implements Iterable<Chunk> {
                     ((int) blockPosInChunk.z)
             );
         }
+    }
+    private Stur getEngine(){
+        return Stur.getEngine();
+    }
+    public void update(){
+        odeWorld.step(1f/30f);
+        bodyChunks.setPosition(0f,0f,0f);
+        bodyChunks.setRotation(new DMatrix3().setIdentity());
+    }
+    public void addBody(Player player) {
+        DBody body = OdeHelper.createBody(odeWorld);
+        player.setBody(body);
+        body.setDynamic();
+        body.enable();
+        DxSpace space = (DxSpace) OdeHelper.createSimpleSpace();
+        DxBox boxGeom = DxBox.dCreateBox(space,player.getBoxSize().x, player.getBoxSize().y,player.getBoxSize().z);
+        boxGeom.setPosition(PhysicsUtils.toODEVec3f(player.getCamera().getPosition()));
+        space.setBody(body);
+
+
     }
 
     public static class ChunkNotFoundException extends Exception {

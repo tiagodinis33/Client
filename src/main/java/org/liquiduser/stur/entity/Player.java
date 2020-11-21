@@ -2,14 +2,17 @@ package org.liquiduser.stur.entity;
 
 import org.joml.*;
 import org.joml.Random;
+import org.liquiduser.stur.math.PhysicsUtils;
 import org.liquiduser.stur.voxel.World;
 import org.liquiduser.stur.render.engine.Camera;
 import org.liquiduser.stur.voxel.Chunk;
 import org.liquiduser.stur.voxel.Chunk.BlockSide;
 import org.liquiduser.stur.voxel.tiles.Tile;
 import org.liquiduser.stur.voxel.tiles.TileAir;
+import org.ode4j.math.DVector3;
+import org.ode4j.ode.DBody;
+import org.ode4j.ode.OdeHelper;
 
-import java.lang.Math;
 import java.util.*;
 
 public class Player {
@@ -18,6 +21,25 @@ public class Player {
     Chunk selectedChunk;
     Camera camera;
     World world;
+    DBody body;
+
+    public void setBody(DBody body) {
+        this.body = body;
+    }
+
+    public Vector3d getBoxSize() {
+        return boxSize;
+    }
+    public void update(){
+        camera
+                .getPosition()
+                .set(PhysicsUtils.toJomlVec3d((DVector3)
+                        body
+                        .getPosition()));
+        camera.getPosition().y += 0.2f;
+
+    }
+    Vector3d boxSize = new Vector3d(0.5f,1f,0.5f);
     public Chunk getSelectedChunk() {
         return selectedChunk;
     }
@@ -25,12 +47,16 @@ public class Player {
     public Player(Camera camera, World world){
         this.camera = camera;
         this.world = world;
+        world.addBody(this);
     }
     public Player(World world){
         this.world = world;
         camera = new Camera(calculateSpawn(),new Vector3f());
+        world.addBody(this);
     }
-
+    public void jump(){
+        body.setLinearVel(body.getLinearVel().get0(), 6,body.getLinearVel().get2());
+    }
     private Vector3f calculateSpawn() {
         Random random = new Random();
         //positive spawn
@@ -169,7 +195,7 @@ public class Player {
             e.printStackTrace();
         }
         selectedChunk.rebuild();
-
+        world.rebuildChunkAABBs();
     }
     public void placeBlock(Tile tile){
         if(tile.getId() == 0) return;
@@ -227,6 +253,7 @@ public class Player {
             } else {
                 selectedChunk.rebuild();
             }
+            world.rebuildChunkAABBs();
         }
     }
 

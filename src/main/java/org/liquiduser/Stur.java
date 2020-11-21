@@ -2,6 +2,8 @@ package org.liquiduser;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.joml.Vector3f;
 import org.liquiduser.net.client.Client;
 import org.liquiduser.stur.voxel.World;
@@ -23,6 +25,7 @@ import org.lwjgl.opengl.GL33;
 import org.ode4j.ode.DWorld;
 import org.ode4j.ode.OdeConfig;
 import org.ode4j.ode.OdeHelper;
+import org.ode4j.ode.internal.DxSpace;
 import org.ode4j.ode.internal.ErrorHandler;
 import org.ode4j.ode.internal.ErrorHdl;
 import org.ode4j.ode.internal.OdeInit;
@@ -187,8 +190,10 @@ final public class Stur extends Thread {
             Camera.active.getPosition().x -= -z;
             Camera.active.getPosition().z -= x;
         }
-        if (Input.isKeyDown(GLFW_KEY_SPACE)) {
-            Camera.active.getPosition().y -= -vel;
+        if (Input.isKeyPressed(GLFW_KEY_SPACE)) {
+            if(thePlayer != null){
+                thePlayer.jump();
+            }
         }
         if (Input.isKeyDown(GLFW_KEY_LEFT_SHIFT)
                 || Input.isKeyDown(GLFW_KEY_RIGHT_SHIFT)) {
@@ -209,6 +214,12 @@ final public class Stur extends Thread {
                     Math.min(90f, Camera.active.getRotation().x + (-dy * mouseSensitivity)));
             Camera.active.getRotation().y = Camera.active.getRotation().y + (-dx * mouseSensitivity);
 
+        }
+        if(theWorld != null){
+            theWorld.update();
+        }
+        if(thePlayer != null){
+            thePlayer.update();
         }
         oldMouseX = newMouseX;
         oldMouseY = newMouseY;
@@ -289,11 +300,12 @@ final public class Stur extends Thread {
     public int getFps() {
         return FPScounter.getFrames();
     }
-
+    Logger LOGGER = LogManager.getLogger();
     private void postStart() {
         OdeHelper.initODE();
+        DxSpace.dInitColliders();
         ErrorHdl.dSetErrorHandler((errnum, msg, ap) -> {
-            System.out.println(errnum +": "+ msg);
+            LOGGER.error(msg);
         });
         theWorld = new World();
 
